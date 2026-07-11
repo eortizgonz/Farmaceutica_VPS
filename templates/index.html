@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pharma & MedDev AI Copilot · UltraApp</title>
+<style>
+:root{
+  --bg:#edf4fb; --bg2:#f8fbff; --card:rgba(255,255,255,.88); --line:#dae6f3;
+  --text:#17324d; --muted:#69809a; --primary:#3b82f6; --secondary:#14b8a6;
+  --violet:#8b5cf6; --pharma:#00a39b; --med:#2d77ff; --green:#22c55e; --yellow:#f59e0b; --red:#ef4444;
+  --shadow:0 22px 50px rgba(24,66,112,.10); --radius:24px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-gradient(circle at top left,#fdfefe 0,#eef6fd 40%,#e8f0fb 100%);color:var(--text)}
+.app{display:grid;grid-template-columns:300px 1fr;min-height:100vh}
+.sidebar{position:sticky;top:0;height:100vh;padding:22px 18px;background:linear-gradient(180deg,#0f2741,#143a61 60%,#15314f);color:#fff;overflow:auto}
+.brand{display:flex;gap:12px;align-items:center;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:14px}
+.logo{width:54px;height:54px;border-radius:18px;background:linear-gradient(135deg,#7ce2d8,#56a3ff 55%,#9b7fff);box-shadow:inset 0 1px 1px rgba(255,255,255,.6),0 14px 30px rgba(0,0,0,.22)}
+.brand h1{margin:0;font-size:18px;line-height:1.15}.brand small{display:block;color:#d8e9ff;margin-top:4px}
+.menu-title{font-size:11px;text-transform:uppercase;letter-spacing:.18em;color:#9fc1e8;margin:18px 8px 10px}
+.vmenu{display:flex;flex-direction:column;gap:9px}
+.vmenu button,.tool-btn{border:0;border-radius:16px;padding:12px 13px;color:#fff;background:rgba(255,255,255,.08);text-align:left;cursor:pointer;font-weight:700;transition:.22s}
+.vmenu button span{display:block;color:#d5e8ff;font-weight:500;font-size:12px;margin-top:5px}
+.vmenu button:hover,.vmenu button.active,.tool-btn:hover{transform:translateY(-1px);background:linear-gradient(135deg,rgba(86,163,255,.95),rgba(20,184,166,.80));box-shadow:0 10px 26px rgba(0,0,0,.18)}
+.sidebar .footer-note{margin-top:16px;padding:14px;border-radius:18px;background:rgba(255,255,255,.08);font-size:12px;line-height:1.45;color:#d5e6fa}
+.main{padding:22px 22px 60px;overflow:auto}
+.topbar{display:grid;grid-template-columns:1.25fr .75fr;gap:16px;align-items:stretch}
+.glass,.card,.kpi,.module,.question,.answer,.action,.simPanel,.metric,.timeline-item{background:var(--card);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.56);border-radius:var(--radius);box-shadow:var(--shadow)}
+.hero{padding:22px;position:relative;overflow:hidden;background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(241,249,255,.86))}
+.hero:before{content:'';position:absolute;right:-45px;top:-55px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,#7ce2d8 0,#56a3ff 50%,transparent 72%);opacity:.28}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;font-size:12px;font-weight:800;background:#eaf5ff;color:#295783}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}.green{background:var(--green)}.yellow{background:var(--yellow)}.red{background:var(--red)}
+.hero h2{margin:12px 0 6px;font-size:31px;line-height:1.1}.hero p{margin:0;color:var(--muted);line-height:1.55;max-width:900px}
+.hero-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:18px}
+.metric{padding:14px 15px}.metric .label{font-size:12px;color:#58718b;font-weight:700;text-transform:uppercase;letter-spacing:.05em}.metric .value{font-size:28px;font-weight:900;margin-top:7px}.metric .mini{font-size:12px;color:var(--muted);margin-top:6px}
+.rightPanel{padding:18px;background:linear-gradient(180deg,#1f67d5,#1baea7);color:#fff;display:flex;flex-direction:column;gap:14px}
+.rightPanel h3{margin:0}.rightPanel p{margin:0;color:rgba(255,255,255,.88);line-height:1.45}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.score{padding:14px;border-radius:18px;background:rgba(255,255,255,.14)}.score b{display:block;font-size:28px;margin-top:6px}
+.section-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
+.tab{border:1px solid var(--line);background:#fff;color:#25445e;padding:10px 14px;border-radius:999px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(25,61,98,.06)}
+.tab.active,.tab:hover{background:linear-gradient(135deg,#eff7ff,#eefcf9);border-color:#bfd8f2}
+.summary-strip{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.card{padding:16px}.signal{display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border-radius:999px;background:#f5f8fc;font-size:12px;font-weight:800;color:#50697f}
+.title-sm{font-size:15px;font-weight:800;margin:0 0 10px}.small{font-size:12px;color:var(--muted)}
+.main-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;margin-top:16px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{padding:15px;min-height:185px;display:flex;flex-direction:column;justify-content:space-between}
+.kpi-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.kpi-title{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#5d738c;font-weight:800}
+.kpi-value{font-size:34px;font-weight:900;line-height:1}.kpi-desc{font-size:13px;color:var(--muted);line-height:1.42;margin-top:8px}
+.traffic{display:inline-flex;gap:5px;padding:6px 8px;border-radius:999px;background:#f4f8fd;border:1px solid #e3edf8}.traffic i{width:10px;height:10px;border-radius:50%;opacity:.24;display:block}.traffic i.on{opacity:1}
+.spark{display:flex;gap:5px;align-items:flex-end;height:44px;margin-top:10px}.spark span{display:block;flex:1;border-radius:9px 9px 2px 2px;background:linear-gradient(180deg,#68a9ff,#4de0c8)}
+.panel-title{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:12px}
+.bars{display:flex;flex-direction:column;gap:12px}.bar-row{display:grid;grid-template-columns:210px 1fr 62px;gap:10px;align-items:center;font-size:13px}.track{height:12px;background:#e9f0f8;border-radius:999px;overflow:hidden}.fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#5aa2ff,#00c6b2);transition:width .8s}.fill.yellow{background:linear-gradient(90deg,#f7c44f,#f59e0b)}.fill.red{background:linear-gradient(90deg,#ff8c8c,#ef4444)}
+.module-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.module{padding:14px}.module h4{margin:0 0 8px;font-size:14px}.module p{margin:0;color:var(--muted);font-size:12px;line-height:1.42}
+.flow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}.flow .module{background:linear-gradient(180deg,#fff,#f5fbff)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.timeline{display:flex;flex-direction:column;gap:10px}.timeline-item{padding:14px}.timeline-item b{display:block;margin-bottom:4px}
+.alert-list{display:flex;flex-direction:column;gap:10px}.alert{padding:12px;border-radius:18px;border:1px solid #dbe7f4;background:linear-gradient(180deg,#fff,#f8fbff)}.alert .top{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:7px}
+.qa-grid{display:grid;grid-template-columns:.88fr 1.12fr;gap:16px;margin-top:16px}
+.question-list{display:flex;flex-direction:column;gap:10px;max-height:640px;overflow:auto;padding-right:4px}.question{padding:15px;cursor:pointer;transition:.18s}.question:hover,.question.active{transform:translateY(-1px);background:linear-gradient(180deg,#fff,#f2fbff);border-color:#c4d8f0}.question h4{margin:0 0 8px;font-size:14px}.question p{margin:0;color:var(--muted);font-size:12px;line-height:1.4}
+.answer{padding:18px}.answer h3{margin:0;font-size:22px}.answer p{color:#4c6580;line-height:1.52}.bullet-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}.bullet{padding:12px;border-radius:16px;background:#f6fbff;border:1px solid #dfebf7;font-size:13px;line-height:1.42}
+.action-list{display:flex;flex-direction:column;gap:10px;margin-top:12px}.action{padding:13px}.action b{display:block;margin-bottom:5px}.pill{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:800}.p-high{background:#ffe7e7;color:#b93333}.p-med{background:#fff2d8;color:#a56b00}.p-low{background:#e8f8ec;color:#2e8f4a}
+.sim-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:16px}.simBtn{padding:15px;border-radius:20px;border:1px solid #dbe7f2;background:linear-gradient(180deg,#fff,#f4fbff);cursor:pointer;transition:.2s;min-height:136px}.simBtn:hover,.simBtn.active{transform:translateY(-2px);box-shadow:0 14px 26px rgba(38,98,164,.12);border-color:#b8d3ee}.simBtn h4{margin:10px 0 6px}.simBtn p{margin:0;font-size:12px;color:var(--muted);line-height:1.4}.tag{display:inline-flex;padding:6px 9px;border-radius:999px;font-size:11px;font-weight:800;background:#edf5ff;color:#296197}
+.simPanel{padding:18px;margin-top:12px}
+.report-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px}
+.report{padding:14px;border-radius:18px;background:linear-gradient(180deg,#fff,#f7fbff);border:1px solid #dce8f3}.report b{display:block;margin-bottom:6px}
+.footer-cta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px}.cta{border:0;border-radius:18px;padding:15px;background:linear-gradient(135deg,#2d77ff,#14b8a6);color:#fff;font-weight:800;cursor:pointer}
+.compact{font-size:11px;color:#72879f}
+@media (max-width:1400px){.summary-strip,.kpi-grid,.report-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.flow{grid-template-columns:repeat(3,minmax(0,1fr))}.topbar,.main-grid,.qa-grid,.grid-2{grid-template-columns:1fr}.module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sim-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:980px){.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.hero-stats,.summary-strip,.kpi-grid,.module-grid,.sim-grid,.report-grid,.footer-cta,.bullet-grid,.score-grid{grid-template-columns:1fr 1fr}.bar-row{grid-template-columns:1fr}.flow{grid-template-columns:1fr 1fr}.main{padding:16px}}
+@media (max-width:640px){.hero h2{font-size:26px}.hero-stats,.summary-strip,.kpi-grid,.module-grid,.sim-grid,.report-grid,.footer-cta,.bullet-grid,.score-grid,.flow{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo"></div><div><h1>Pharma & MedDev<br>AI Copilot</h1><small>UltraApp · Cloud UX · Semáforo</small></div></div>
+    <div class="menu-title">Proceso</div><div class="vmenu" id="processMenu"></div>
+    <div class="menu-title">Perfil</div><div class="vmenu" id="profileMenu"></div>
+    <div class="menu-title">Simuladores SAP</div><div class="vmenu" id="sapMenu"></div>
+    <div class="menu-title">Accesos rápidos</div>
+    <div class="vmenu">
+      <button class="tool-btn" onclick="scrollToId('qa')">Preguntas y respuestas</button>
+      <button class="tool-btn" onclick="scrollToId('simulators')">Simuladores integrados</button>
+      <button class="tool-btn" onclick="scrollToId('reports')">Reportes y exportables</button>
+    </div>
+    <div class="footer-note">Aplicación demostrativa expandida: integra navegación por proceso, cockpit por perfil, mini apps conectadas, respuesta automática, alertas, roadmap y experiencia visual profesional.</div>
+  </aside>
+  <main class="main">
+    <section class="topbar">
+      <div class="hero glass">
+        <div class="badge"><span class="dot green" id="heroDot"></span><span id="heroStatus">Sistema integrado estable</span></div>
+        <h2 id="heroTitle">Centro integral para Farmacéutica y Dispositivos Médicos</h2>
+        <p id="heroText">La UltraApp centraliza validación, batch records, auditoría, calidad y regulación dentro de una sola experiencia cloud. Permite ver estado por proceso, contestar preguntas por perfil, priorizar acciones y simular decisiones con SAP ERP, MII, ME, CAP y BTP.</p>
+        <div class="hero-stats" id="heroStats"></div>
+      </div>
+      <div class="rightPanel glass">
+        <div><h3>Objetivo de la aplicación</h3><p>Reducir riesgo regulatorio, acelerar decisiones y unificar la gestión operativa, financiera, ejecutiva y comercial en un solo entorno visual y didáctico.</p></div>
+        <div class="score-grid" id="scoreGrid"></div>
+      </div>
+    </section>
+
+    <div class="section-tabs" id="processTabs"></div>
+
+    <section class="summary-strip" id="summaryStrip"></section>
+
+    <section class="main-grid">
+      <div>
+        <div class="panel-title"><h3 class="title-sm">KPIs clave del proceso</h3><span class="small">Actualización simulada en tiempo real</span></div>
+        <div class="kpi-grid" id="kpiGrid"></div>
+      </div>
+      <div class="card">
+        <div class="panel-title"><h3 class="title-sm">Componentes del proceso</h3><span class="signal"><span class="dot green"></span>Desglose secuencial</span></div>
+        <div class="bars" id="bars"></div>
+      </div>
+    </section>
+
+    <section class="grid-2">
+      <div class="card">
+        <div class="panel-title"><h3 class="title-sm">Mini apps integradas</h3><span class="small">Navegación con un clic</span></div>
+        <div class="module-grid" id="miniApps"></div>
+      </div>
+      <div class="card">
+        <div class="panel-title"><h3 class="title-sm">Secuencia del proceso</h3><span class="small">Paso a paso operativo</span></div>
+        <div class="flow" id="flow"></div>
+      </div>
+    </section>
+
+    <section class="grid-2">
+      <div class="card">
+        <div class="panel-title"><h3 class="title-sm">Alertas y semáforo</h3><span class="small">Prioridades del proceso activo</span></div>
+        <div class="alert-list" id="alerts"></div>
+      </div>
+      <div class="card">
+        <div class="panel-title"><h3 class="title-sm">Cronograma recomendado</h3><span class="small">Seguimiento de hitos</span></div>
+        <div class="timeline" id="timeline"></div>
+      </div>
+    </section>
+
+    <section class="qa-grid" id="qa">
+      <div class="card">
+        <div class="panel-title"><h3 class="title-sm">Preguntas dinámicas por perfil</h3><span class="small" id="profileBadge">Perfil activo: Operacional</span></div>
+        <div class="question-list" id="questionList"></div>
+      </div>
+      <div class="answer" id="answerBox">
+        <div class="panel-title"><h3 id="answerTitle">Seleccione una pregunta</h3><div class="traffic" id="answerTraffic"><i></i><i></i><i></i></div></div>
+        <p id="answerText">La plataforma responderá automáticamente con impacto, análisis y acciones sugeridas.</p>
+        <div class="track"><div class="fill" id="answerFill" style="width:60%"></div></div>
+        <div class="bullet-grid" id="answerBullets"></div>
+        <div class="action-list" id="actionList"></div>
+      </div>
+    </section>
+
+    <section class="card" id="simulators" style="margin-top:16px">
+      <div class="panel-title"><h3 class="title-sm">Simuladores SAP integrados</h3><span class="small">ERP · MII · ME · CAP · BTP</span></div>
+      <div class="sim-grid" id="simGrid"></div>
+      <div class="simPanel" id="simPanel"><h3 style="margin:0 0 8px">Seleccione un simulador</h3><p style="margin:0;color:var(--muted)">Cada simulador explica qué información entrega a la app y cómo apoya la toma de decisiones del proceso actual.</p></div>
+    </section>
+
+    <section class="card" id="reports" style="margin-top:16px">
+      <div class="panel-title"><h3 class="title-sm">Reportes y entregables</h3><span class="small">Información disponible dentro de la app</span></div>
+      <div class="report-grid" id="reportsGrid"></div>
+      <div class="footer-cta">
+        <button class="cta" onclick="setProfile('Operacional')">Vista Operacional</button>
+        <button class="cta" onclick="setProfile('Financiero')">Vista Financiera</button>
+        <button class="cta" onclick="setProfile('Ejecutivo')">Vista Ejecutiva</button>
+        <button class="cta" onclick="setProfile('Comercial')">Vista Comercial</button>
+      </div>
+    </section>
+  </main>
+</div>
+<script>
+const profiles=['Operacional','Financiero','Ejecutivo','Comercial'];
+const simulators={
+  ERP:{title:'SAP ERP',tag:'Core transactional',desc:'Órdenes, materiales, costos, compras, lotes y status financiero.',bullets:['Recibe producción y stock','Expone costos estándar y reales','Sincroniza maestros y órdenes'],impact:['Planificación más confiable','Visibilidad de costo y margen','Estado financiero del lote']},
+  MII:{title:'SAP MII',tag:'Manufacturing intelligence',desc:'Historian, monitoreo de planta, dashboards técnicos y visibilidad de eventos.',bullets:['Captura señales de equipos','Monitorea paradas y eventos','Contextualiza variables de proceso'],impact:['Detección temprana de desvíos','Trazabilidad técnica','Análisis de causa raíz']},
+  ME:{title:'SAP ME',tag:'Manufacturing execution',desc:'Ejecución en piso, trazabilidad de operación, genealogía y e-records.',bullets:['Gestiona rutas y operaciones','Controla consumos y serialización','Evidencia electrónica del lote'],impact:['Mayor cumplimiento batch','Reducción de errores manuales','Trazabilidad end-to-end']},
+  CAP:{title:'SAP CAP',tag:'Custom apps',desc:'Servicios y apps propias para reglas de negocio, workflows y analítica extendida.',bullets:['Microservicios por proceso','Reglas automáticas de negocio','APIs y pantallas personalizadas'],impact:['Flexibilidad funcional','Automatización de aprobaciones','UX adaptada al rubro']},
+  BTP:{title:'SAP BTP',tag:'Integration & analytics',desc:'Integración cloud, workflows, data products, IA y aplicaciones extendidas.',bullets:['Orquesta integraciones','Despliega apps cloud','Entrega analítica y automatización'],impact:['Arquitectura moderna','Escalabilidad empresarial','Mayor velocidad de innovación']}
+};
+const processData={
+  validation:{
+    name:'Validación', signal:'green', status:'Proceso estable y controlado',
+    title:'Centro de Validación GxP y CSV',
+    description:'Gestiona IQ, OQ, PQ, CSV, revalidaciones, matrices de riesgo, evidencias, e-signatures y preparación de liberación técnica.',
+    hero:[['Protocolos activos','52','IQ/OQ/PQ/CSV'],['Cumplimiento plan','94%','Hitos a fecha'],['Riesgo residual','Bajo','2 desvíos abiertos'],['Equipos cubiertos','98%','Críticos validados']],
+    scores:[['Madurez','4.4/5'],['CAPA','92%'],['Revalidación','7'],['Readiness','95%']],
+    summary:[
+      ['Estado general','Verde','Portafolio de validación controlado y priorizado.'],['Impacto al negocio','Verde','Asegura go-live y continuidad GMP.'],['Atención inmediata','Amarillo','PQ en línea secundaria con seguimiento.'],['Automatización','Verde','e-signatures y evidencias centralizadas.'],['Riesgo regulatorio','Verde','Sin brechas críticas abiertas.']
+    ],
+    kpis:[
+      ['Ejecución de protocolos',93,'%','Avance mensual de ejecución contra el plan aprobado',[44,55,62,71,75,86,93]],['Cobertura CSV',91,'%','Sistemas computarizados con evidencia de cumplimiento',[32,45,58,63,70,83,91]],['Revalidación a tiempo',88,'%','Equipos/procesos revalidados según calendario',[25,48,61,69,73,82,88]],['Cumplimiento QA witness',96,'%','Presencia y aprobación QA en pruebas críticas',[58,64,72,81,87,92,96]]
+    ],
+    bars:[['URS y alcance',97,'green'],['Matriz de riesgo',92,'green'],['IQ / instalación',96,'green'],['OQ / operación',88,'yellow'],['PQ / desempeño',84,'yellow'],['CSV / Part 11',91,'green']],
+    miniApps:[['App IQ/OQ','Control por equipo, protocolo y evidencia.'],['App PQ','Monitoreo de desempeño y reproducibilidad.'],['App CSV','Firmas electrónicas, accesos y compliance.'],['App Revalidación','Alertas por tiempo, cambio o tendencia.'],['App Riesgo','FMEA y evaluación de criticidad.'],['App Go-Live','Checklist final de liberación técnica.']],
+    flow:[['Definir URS','Requerimientos y alcance GMP'],['Riesgo','FMEA y criticidad'],['IQ','Instalación documentada'],['OQ','Pruebas funcionales'],['PQ','Consistencia del desempeño'],['Liberar','Aprobación y plan de mantenimiento']],
+    alerts:[['yellow','OQ en empaque secundario con atraso de 6 días','Replanificar ventana y QA witness'],['green','CSV de laboratorio liberado','Sin impacto al cronograma'],['green','Matriz de riesgo actualizada','Cobertura de equipos críticos completa']],
+    timeline:[['Hoy','Cerrar 2 pruebas OQ pendientes'],['48 horas','Revisar impacto de cambio crítico'],['7 días','Emitir reporte PQ línea estéril'],['15 días','Iniciar revalidación AC-07']],
+    reports:[['Mapa de validación','Vista por site, línea, equipo y estado semáforo'],['Matriz de riesgo','Riesgo por proceso, equipo y sistema GxP'],['Reporte de cumplimiento','Avance semanal y backlog'],['Evidencias / e-signatures','Repositorio digital de aprobación']],
+    questions:{
+      Operacional:[
+        q('¿Qué protocolo debo priorizar hoy?','Debe priorizarse el OQ de la línea de empaque secundaria porque habilita el cierre del cambio técnico y libera la siguiente fase PQ.','Retraso potencial en liberación de producto y uso de línea.',76,['Línea EMP-204 con ventana limitada','Se requieren 2 pruebas y aprobación QA','Impacta 2 órdenes de cambio'],[['Bloquear ventana en producción','Producción','Alta'],['Asignar witness QA','Calidad','Alta'],['Cerrar prerequisitos técnicos','Ingeniería','Media']]),
+        q('¿Qué equipo requiere revalidación inmediata?','El autoclave AC-07 requiere revalidación por reemplazo de sensor crítico y tendencia térmica fuera de especificación.','Riesgo GMP moderado si no se interviene.',84,['Cambio de componente crítico','Tendencia OOT observada','Uso condicionado hasta cierre'],[['Iniciar evaluación de impacto','Validación','Alta'],['Ejecutar OQ parcial','Validación','Alta'],['Confirmar calibración','Metrología','Alta']])
+      ],
+      Financiero:[q('¿Cuál es el costo del atraso de validación?','El atraso acumulado se estima en USD 132.000 considerando horas, reejecución y potencial atraso comercial.','Afecta costos de proyecto y velocidad de lanzamiento.',71,['USD 58k horas y retrabajo','USD 74k por atraso comercial','3 iniciativas concentran el impacto'],[['Priorizar proyectos de mayor margen','PMO','Alta'],['Consolidar ventanas de prueba','Operaciones','Media'],['Monitorear ahorro evitado','Finanzas','Media']])],
+      Ejecutivo:[q('¿Cuál es la madurez global del proceso?','La madurez actual es 4.4/5; la mayor oportunidad está en automatizar revalidaciones y analítica predictiva.','Operación controlada con alto potencial de eficiencia.',88,['Gobierno robusto','Cobertura digital alta','Brecha en analítica predictiva'],[['Aprobar roadmap analytics','Dirección','Media'],['Monitorear KPIs trimestrales','QA','Media']])],
+      Comercial:[q('¿Cómo impacta la validación a lanzamientos?','Dos lanzamientos dependen del cierre de PQ y CSV; si se mantienen las prioridades actuales no debería existir impacto al go-live comercial.','Protege fecha de salida al mercado.',80,['2 SKUs estratégicos','Riesgo bajo si se ejecuta esta semana','Marketing y supply alineados'],[['Alinear cronograma de lanzamiento','Comercial','Media'],['Actualizar forecast contingente','Supply Chain','Baja']])]
+    }
+  },
+  batch:{
+    name:'Batch Records', signal:'yellow', status:'Proceso estable con foco documental', title:'Centro digital de Batch Records y Release by Exception', description:'Integra MBR, EBR, revisión por excepción, genealogía, firmas electrónicas y control documental para lotes farmacéuticos y MedDev.',
+    hero:[['EBR activos','326','Lotes en ejecución'],['RFT documental','96%','Right first time'],['Lotes retenidos','5','Por revisión QA'],['Genealogía','100%','Trazabilidad completa']],
+    scores:[['Review by exception','86%'],['Tiempo revisión','6.1h'],['Errores doc.','1.8%'],['Integridad','98%']],
+    summary:[['Estado general','Amarillo','Proceso sólido con foco en reducción de errores documentales.'],['Impacto al negocio','Verde','Mejora liberación y trazabilidad.'],['Atención inmediata','Amarillo','5 lotes retenidos por aclaraciones.'],['Automatización','Verde','Revisión por excepción habilitada.'],['Riesgo regulatorio','Verde','Integridad de datos alta.']],
+    kpis:[['Right first time',96,'%','Registros sin correcciones mayores',[42,50,62,70,82,91,96]],['Review by exception',86,'%','Revisión automatizada habilitada',[28,39,54,60,70,79,86]],['Tiempo de revisión',78,'pts','Índice invertido de eficiencia de revisión',[35,41,50,58,66,71,78]],['Trazabilidad e-record',98,'%','Cobertura de registros digitales completos',[58,65,74,83,90,95,98]]],
+    bars:[['Master Batch Record',94,'green'],['Electronic Batch Record',89,'yellow'],['Review by Exception',86,'yellow'],['Firmas electrónicas',98,'green'],['Genealogía de materiales',100,'green'],['Errores documentales',68,'red']],
+    miniApps:[['App MBR','Versiones maestras y control de cambios.'],['App EBR','Captura digital de ejecución y evidencias.'],['App Release','Revisión por excepción y liberación QA.'],['App Genealogía','Trazabilidad 360 de insumos y lotes.'],['App Integridad de datos','ALCOA+, firmas y auditoría.'],['App Desvíos documentales','Correcciones y recurrencia.']],
+    flow:[['Definir MBR','Receta y parámetros críticos'],['Ejecutar','Captura electrónica del lote'],['Controlar','Alarmas y desviaciones'],['Revisar','QA by exception'],['Liberar','Aprobación final'],['Archivar','Historial íntegro y búsqueda']],
+    alerts:[['yellow','Lote B-24071 retenido por discrepancia de peso','Completar justificación y revisión QA'],['red','Aumento de errores documentales en línea 3','Refuerzo de entrenamiento y bloqueo preventivo'],['green','Genealogía completa en todas las órdenes críticas','Cobertura total de trazabilidad']],
+    timeline:[['Hoy','Resolver lote retenido B-24071'],['48 horas','Actualizar MBR de SKU prioritario'],['7 días','Reducir errores documentales de línea 3'],['15 días','Expandir review by exception a nueva familia']],
+    reports:[['Lotes retenidos','Causas, aging y responsables'],['Integridad documental','Errores por línea y turno'],['Genealogía','Trazabilidad hacia atrás y adelante'],['Release by exception','Tiempo de revisión y ahorro']],
+    questions:{
+      Operacional:[q('¿Qué lote debo revisar primero?','El lote B-24071 requiere revisión inmediata por discrepancia en un peso crítico registrado en el EBR.','Puede retrasar liberación y ocupación de almacén.',74,['1 evento crítico documentado','QA pendiente de verificación','Impacta pedido prioritario'],[['Revisar evidencia de pesada','Producción','Alta'],['Completar justificación en EBR','Supervisor','Alta'],['Liberar/retener con decisión QA','Calidad','Alta']])],
+      Financiero:[q('¿Cuál es el costo de los errores documentales?','Los errores documentales y tiempos de revisión generan un costo mensual estimado de USD 96.000 entre horas, retenciones y retrabajo.','Afecta costo por lote y capital inmovilizado.',70,['Retrabajo QA y producción','5 lotes retenidos','Tiempo de revisión arriba del objetivo'],[['Atacar top causas de error','Finanzas/QA','Media'],['Medir costo evitado por automatización','PMO','Media']])],
+      Ejecutivo:[q('¿Cuál es la oportunidad estratégica del EBR?','La mayor oportunidad es escalar review by exception y reducir correcciones manuales para acortar el lead time de liberación.','Impacta velocidad operacional y capacidad disponible.',87,['RFT muy sólido','Automatización parcial','Ahorro claro por digitalización'],[['Extender EBR a nuevas familias','Dirección','Media']])],
+      Comercial:[q('¿Qué impacto tiene en el servicio?','El impacto comercial actual es acotado; solo 1 pedido premium está condicionado a un lote en revisión.',79,['Existe stock alternativo parcial','Cliente clave requiere ETA confiable'],[['Actualizar fecha comprometida','Comercial','Baja']])]
+    }
+  },
+  audit:{
+    name:'Auditoría', signal:'yellow', status:'Readiness alto con hallazgos en seguimiento', title:'Command Center de Auditorías e Inspecciones', description:'Controla auditorías internas, externas, proveedores, readiness regulatorio y seguimiento CAPA hasta verificar efectividad.',
+    hero:[['Auditorías plan','22','Anuales'],['Readiness','91%','Preparación inspección'],['CAPA on time','83%','Acciones en fecha'],['Hallazgos críticos','2','Abiertos']],
+    scores:[['Internas','14'],['Proveedores','7'],['Regulatorias','1'],['Críticas','2']],
+    summary:[['Estado general','Amarillo','Readiness alto con foco en 2 hallazgos mayores.'],['Impacto al negocio','Verde','Protege continuidad y reputación.'],['Atención inmediata','Rojo','CAPA de accesos GxP pendiente.'],['Automatización','Verde','War room digital estructurado.'],['Riesgo regulatorio','Amarillo','Mayor seguimiento de efectividad.']],
+    kpis:[['Readiness inspección',91,'%','Documentación, training y evidencias',[39,52,63,71,80,86,91]],['Cierre de CAPA',83,'%','Acciones de auditoría cerradas a tiempo',[28,35,44,58,66,77,83]],['Cobertura proveedores',88,'%','Proveedores críticos auditados',[31,44,56,64,74,82,88]],['Hallazgos críticos',61,'pts','Índice invertido de riesgo',[20,26,31,40,48,56,61]]],
+    bars:[['Plan anual',92,'green'],['Preparación evidencias',95,'green'],['Cierre observaciones',83,'yellow'],['CAPA effectiveness',79,'yellow'],['Supplier audits',88,'yellow'],['Hallazgos críticos',61,'red']],
+    miniApps:[['App Readiness','Sala de control previa a inspección.'],['App Supplier Audits','Seguimiento por proveedor crítico.'],['App CAPA','Acciones, fechas y efectividad.'],['App War Room','Evidencias y Q&A de inspección.'],['App Training','Personal entrenado y matrix'],['App Follow-up','Hallazgos repetidos y escalación.']],
+    flow:[['Planificar','Alcance y calendario'],['Preparar','Evidencias y training'],['Ejecutar','Auditoría / inspección'],['Registrar','Hallazgos y clasificación'],['CAPA','Plan y efectividad'],['Cerrar','Readiness renovado']],
+    alerts:[['red','Hallazgo mayor en gestión de accesos GxP','Validar efectividad del CAPA'],['yellow','Proveedor crítico P-04 sin auditoría in situ','Programar visita o evaluación remota'],['green','War room inspección actualizado','Evidencias al día']],
+    timeline:[['Hoy','Cerrar prueba de efectividad CAPA accesos'],['72 horas','Confirmar fecha de supplier audit P-04'],['10 días','Comité readiness regulatorio'],['30 días','Cierre de 2 hallazgos mayores']],
+    reports:[['Readiness audit','Checklist por inspección'],['CAPA status','Aging, due dates y efectividad'],['Supplier quality','Mapa de proveedores y hallazgos'],['War room','Documentos críticos y owners']],
+    questions:{
+      Operacional:[q('¿Qué hallazgo requiere atención inmediata?','El hallazgo mayor sobre gestión de accesos a sistemas GxP es la principal prioridad operativa.','Riesgo de repetición regulatoria.',72,['Afecta 2 sistemas críticos','CAPA definido pero sin prueba final','Inspección prevista en 45 días'],[['Validar matriz de accesos','IT','Alta'],['Ejecutar prueba de efectividad','QA','Alta'],['Escalar a steering','Dirección','Media']])],
+      Financiero:[q('¿Cuál es el costo del incumplimiento?','El costo potencial anualizado supera USD 250.000 por retrabajo, consultoría y riesgo de interrupción.',69,['3 proveedores concentran la exposición','Costo correctivo > preventivo'],[['Reservar presupuesto CAPA','Finanzas','Alta'],['Priorizar suppliers A','Compras','Media']])],
+      Ejecutivo:[q('¿Estamos listos para una inspección?','La organización muestra readiness alto, pero debe cerrar 2 hallazgos mayores antes de la próxima inspección.','Riesgo controlado, no cerrado.',86,['Training > 96%','Documentación bien estructurada','Brecha en follow-up de efectividad'],[['Instalar comité quincenal','Dirección QA','Media']])],
+      Comercial:[q('¿Existe riesgo reputacional frente a clientes?','Sí, un resultado regulatorio adverso podría afectar licitaciones y cuentas institucionales sensibles.','Impacto comercial indirecto pero relevante.',77,['Clientes premium exigen compliance sólido'],[['Vincular readiness a plan de cuentas','Comercial','Baja']])]
+    }
+  },
+  quality:{
+    name:'Calidad', signal:'green', status:'Sistema de calidad estable', title:'Centro de Calidad, CAPA y Release', description:'Administra desviaciones, OOS/OOT, CAPA, complaints, APQR, liberación de lotes y vigilancia de la calidad orientada al paciente y al usuario.',
+    hero:[['CAPA on time','89%','Acciones cerradas'],['Desviaciones abiertas','23','5 críticas'],['First pass release','94%','Lotes sin retrabajo'],['Complaints trend','-8%','Vs trimestre anterior']],
+    scores:[['OOS/OOT','6'],['Liberaciones','142'],['Complaints','11'],['RFT','94%']],
+    summary:[['Estado general','Verde','Sistema de calidad controlado.'],['Impacto al negocio','Verde','Protege servicio y release.'],['Atención inmediata','Amarillo','5 CAPA de alta prioridad.'],['Automatización','Verde','Tendencias y release monitoreados.'],['Riesgo regulatorio','Verde','Sin eventos críticos a seguridad.']],
+    kpis:[['Liberación first pass',94,'%','Lotes liberados sin retrabajo',[45,57,63,71,82,90,94]],['CAPA on time',89,'%','Cierre a tiempo de acciones',[30,43,55,64,75,84,89]],['Desviaciones críticas',77,'pts','Índice invertido de riesgo',[25,32,40,51,60,68,77]],['Tendencia complaints',88,'pts','Índice de mejora trimestral',[41,49,58,66,74,81,88]]],
+    bars:[['Desviaciones',84,'yellow'],['CAPA',89,'yellow'],['OOS / OOT',91,'green'],['Complaints',88,'yellow'],['Batch Release',94,'green'],['APQR / trend',86,'yellow']],
+    miniApps:[['App Deviations','Gestión de eventos y clasificación.'],['App CAPA','Acciones, responsables y efectividad.'],['App Release','Liberación de lotes con semáforo.'],['App Complaints','Voz del cliente y tendencias.'],['App APQR','Revisión anual y mejora continua.'],['App OOS/OOT','Seguimiento de investigaciones.']],
+    flow:[['Detectar','Desviación / OOS / complaint'],['Investigar','RCA e impacto'],['Contener','Acción inmediata'],['Corregir','CAPA y seguimiento'],['Liberar','Decisión QA'],['Mejorar','Trend y APQR']],
+    alerts:[['yellow','DV-219 por humedad fuera de rango','Investigar causa raíz y decidir disposición'],['green','Lead time de liberación dentro del objetivo','Servicio protegido'],['yellow','5 CAPA high priority en seguimiento','Patrocinar con steering']],
+    timeline:[['Hoy','Revisar DV-219'],['72 horas','Definir disposición del lote'],['7 días','Cerrar 2 CAPA high'],['30 días','Presentar tendencia APQR']],
+    reports:[['Cost of Quality','Scrap, retrabajo, cuarentena e investigación'],['Release dashboard','Aging y lead time de liberación'],['CAPA cockpit','Backlog, aging y efectividad'],['Complaints trend','Tipo, severidad y tendencia']],
+    questions:{
+      Operacional:[q('¿Qué desviación crítica debo atender primero?','La desviación DV-219 asociada a humedad en granulación es la prioridad número uno por su posible impacto en uniformidad.','Puede comprometer liberación y uso de capacidad.',81,['1 lote en cuarentena','Fuera de rango por 14 min','Contención ya activada'],[['Convocar equipo RCA','Calidad','Alta'],['Revisar historian MII','Ingeniería','Alta'],['Definir disposición del lote','QA','Alta']])],
+      Financiero:[q('¿Cuál es el costo de la no calidad?','La no calidad del mes suma USD 214.000 entre scrap, retrabajo, cuarentena e investigación.','Impacta directamente el margen bruto.',75,['Scrap 41% del total','Retrabajo 27%','Investigación 14%'],[['Lanzar programa cost of quality','Finanzas/QA','Media']])],
+      Ejecutivo:[q('¿Cómo está el sistema de calidad?','El sistema se encuentra estable y mayoritariamente en verde, con foco en reducir desviaciones críticas y acelerar CAPA high.','Operación controlada con mejoras concretas.',90,['Release robusto','Complaints a la baja','5 CAPAs high'],[['Mantener gobierno mensual','Gerencia','Baja']])],
+      Comercial:[q('¿La calidad está afectando el servicio?','El impacto actual es bajo-moderado; 2 pedidos podrían verse afectados por liberación extendida, pero existe stock alternativo parcial.','Permite comunicación proactiva y gestión de ETA.',83,['Sin recall','Stock alternativo disponible'],[['Actualizar ETA al cliente','Servicio al cliente','Baja']])]
+    }
+  },
+  regulatory:{
+    name:'Regulación', signal:'yellow', status:'Compromisos regulados bajo control', title:'Centro de Regulación, Variations y Vigilancia', description:'Gestiona registros, variaciones, etiquetado/UDI, vigilancia, compromisos post aprobación y el cumplimiento regulatorio para Farmacéutica y MedDev.',
+    hero:[['Submissions abiertas','18','Drug & MedDev'],['Commitments on time','87%','Post-approval'],['Variations críticas','4','Impacto mercado'],['Vigilancia','99%','Eventos gestionados']],
+    scores:[['Registros','42'],['Países','11'],['UDI','96%'],['Compromisos','87%']],
+    summary:[['Estado general','Amarillo','Portafolio regulatorio estable con foco en variations críticas.'],['Impacto al negocio','Verde','Sostiene continuidad de mercado.'],['Atención inmediata','Amarillo','4 variaciones con impacto comercial.'],['Automatización','Verde','Calendario y dossier centralizados.'],['Riesgo regulatorio','Amarillo','Algunas fechas críticas próximas.']],
+    kpis:[['Submissions on time',88,'%','Envíos regulatorios en fecha',[37,46,54,63,72,81,88]],['UDI / etiquetado',96,'%','Cumplimiento de etiquetado y trazabilidad',[54,62,71,80,88,93,96]],['Post-approval commitments',87,'%','Compromisos y respuestas a fecha',[28,34,43,58,66,76,87]],['Vigilancia / PMS',99,'%','Eventos y reportes gestionados',[60,70,79,86,92,97,99]]],
+    bars:[['Dossier y registros',89,'yellow'],['Variations',81,'yellow'],['Labeling / UDI',96,'green'],['Regulatory commitments',87,'yellow'],['Pharmacovigilance / PMS',99,'green'],['Market continuity risk',68,'red']],
+    miniApps:[['App Dossiers','Registros, renovaciones y país.'],['App Variations','Cambios y aprobaciones regulatorias.'],['App Labeling/UDI','Etiquetado y trazabilidad regulada.'],['App Vigilancia','Eventos y seguimiento PMS/PV.'],['App Commitments','Post-approval commitments'],['App Market continuity','Riesgo de continuidad por regulación.']],
+    flow:[['Planificar','Calendario regulatorio'],['Preparar','Dossiers y evidencias'],['Enviar','Submission / variation'],['Responder','Queries y compromisos'],['Mantener','Labeling y vigilancia'],['Cerrar','Aprobación y continuidad']],
+    alerts:[['yellow','4 variaciones críticas próximas a vencimiento','Priorizar dossiers con impacto mercado'],['red','Riesgo de continuidad en registro LATAM-02','Escalar con regulatory lead'],['green','UDI y etiquetado dentro de objetivo','Cumplimiento sostenido']],
+    timeline:[['Hoy','Revisar 4 variations críticas'],['72 horas','Cerrar respuesta a query país CL'],['10 días','Actualizar labeling regional'],['20 días','Comité continuidad regulatoria']],
+    reports:[['Submission pipeline','País, producto, estado y fechas'],['Regulatory risk map','Riesgo por mercado y expediente'],['UDI cockpit','Cumplimiento de etiquetado'],['Commitments tracker','Backlog y aging post-approval']],
+    questions:{
+      Operacional:[q('¿Qué submission debo priorizar esta semana?','Debe priorizarse la variation mayor del producto PMD-11 porque condiciona la continuidad de venta en dos mercados.','Riesgo de disponibilidad comercial si se retrasa.',73,['Impacta 2 países','Fecha crítica en 9 días','Requiere input técnico y QA'],[['Cerrar dossier técnico','Regulatory','Alta'],['Alinear evidencia QA','Calidad','Alta'],['Confirmar impacto comercial','Comercial','Media']])],
+      Financiero:[q('¿Cuál es el costo del riesgo regulatorio?','El costo potencial de una demora regulatoria crítica supera USD 410.000 por ventas diferidas, cambios urgentes y soporte externo.','Afecta continuidad de ingresos y margen.',68,['2 expedientes concentran la exposición','Alto costo por urgencias'],[['Asignar budget de contingencia','Finanzas','Alta']])],
+      Ejecutivo:[q('¿Cuál es la salud del portafolio regulatorio?','La salud del portafolio es buena, con cumplimiento alto en UDI y vigilancia; la brecha principal está en variations de alto impacto.','Portafolio controlado con foco selectivo.',86,['11 países cubiertos','Compromisos sobre 87%','Continuidad de mercado priorizada'],[['Instalar revisión quincenal','Dirección','Media']])],
+      Comercial:[q('¿Qué mercados están en riesgo?','Hay riesgo moderado en dos mercados por una variation pendiente; el resto del portafolio está estable y con continuidad asegurada.','Permite ajustar forecasting y prioridades comerciales.',79,['Riesgo focalizado y gestionable'],[['Actualizar forecast por mercado','Comercial','Media']])]
+    }
+  }
+};
+function q(question,answer,impact,score,bullets,actions){return{question,answer,impact,score,bullets,actions};}
+let currentProcess='validation'; let currentProfile='Operacional'; let currentSim='ERP';
+function renderMenus(){
+  const pm=document.getElementById('processMenu');
+  pm.innerHTML=''; Object.keys(processData).forEach(id=>{const p=processData[id]; const b=btn(p.name,p.title,()=>setProcess(id), id===currentProcess); pm.appendChild(b);});
+  const pf=document.getElementById('profileMenu'); pf.innerHTML=''; profiles.forEach(name=>pf.appendChild(btn(name,'Preguntas y respuesta por perfil',()=>setProfile(name), name===currentProfile)));
+  const sm=document.getElementById('sapMenu'); sm.innerHTML=''; Object.keys(simulators).forEach(key=>sm.appendChild(btn(key,simulators[key].tag,()=>setSim(key), key===currentSim)));
+}
+function btn(title,subtitle,click,active){const b=document.createElement('button'); if(active) b.classList.add('active'); b.innerHTML=`${title}<span>${subtitle}</span>`; b.onclick=click; return b;}
+function scrollToId(id){document.getElementById(id).scrollIntoView({behavior:'smooth'});}
+function setProcess(id){currentProcess=id; renderMenus(); renderProcess(); renderQuestions(); renderSimulator();}
+function setProfile(name){currentProfile=name; renderMenus(); renderQuestions();}
+function setSim(name){currentSim=name; renderMenus(); renderSimulator();}
+function renderProcess(){
+  const p=processData[currentProcess];
+  document.getElementById('heroTitle').textContent=p.title;
+  document.getElementById('heroText').textContent=p.description;
+  document.getElementById('heroStatus').textContent=p.status;
+  const heroDot=document.getElementById('heroDot'); heroDot.className='dot '+signalClass(p.signal);
+  const hs=document.getElementById('heroStats'); hs.innerHTML=''; p.hero.forEach(x=>{hs.innerHTML+=`<div class="metric"><div class="label">${x[0]}</div><div class="value">${x[1]}</div><div class="mini">${x[2]}</div></div>`;});
+  const sg=document.getElementById('scoreGrid'); sg.innerHTML=''; p.scores.forEach(x=>sg.innerHTML+=`<div class="score"><div>${x[0]}</div><b>${x[1]}</b></div>`);
+  const tabs=document.getElementById('processTabs'); tabs.innerHTML=''; Object.keys(processData).forEach(id=>{const b=document.createElement('button'); b.className='tab'+(id===currentProcess?' active':''); b.textContent=processData[id].name; b.onclick=()=>setProcess(id); tabs.appendChild(b);});
+  const strip=document.getElementById('summaryStrip'); strip.innerHTML=''; p.summary.forEach(s=>strip.innerHTML+=`<div class="card"><div class="signal"><span class="dot ${textSignalClass(s[1])}"></span>${s[1]}</div><div class="title-sm" style="margin-top:10px">${s[0]}</div><div class="small">${s[2]}</div></div>`);
+  const kpi=document.getElementById('kpiGrid'); kpi.innerHTML=''; p.kpis.forEach((k,i)=>{const sig=k[1]>=90?'green':k[1]>=80?'yellow':'red'; kpi.innerHTML+=`<div class="kpi"><div><div class="kpi-head"><div class="kpi-title">${k[0]}</div><div class="traffic">${lights(sig)}</div></div><div class="kpi-value" data-base="${k[1]}" data-unit="${k[2]}" id="kpi-${i}">${k[1]}${k[2]}</div><div class="kpi-desc">${k[3]}</div></div><div class="spark">${k[4].map(v=>`<span style="height:${Math.max(18,v)}%"></span>`).join('')}</div></div>`;});
+  const bars=document.getElementById('bars'); bars.innerHTML=''; p.bars.forEach(b=>bars.innerHTML+=`<div class="bar-row"><div>${b[0]}</div><div class="track"><div class="fill ${b[2]==='yellow'?'yellow':b[2]==='red'?'red':''}" style="width:${b[1]}%"></div></div><div>${b[1]}%</div></div>`);
+  const mini=document.getElementById('miniApps'); mini.innerHTML=''; p.miniApps.forEach(m=>mini.innerHTML+=`<div class="module"><h4>${m[0]}</h4><p>${m[1]}</p></div>`);
+  const flow=document.getElementById('flow'); flow.innerHTML=''; p.flow.forEach(f=>flow.innerHTML+=`<div class="module"><h4>${f[0]}</h4><p>${f[1]}</p></div>`);
+  const alerts=document.getElementById('alerts'); alerts.innerHTML=''; p.alerts.forEach(a=>alerts.innerHTML+=`<div class="alert"><div class="top"><span class="signal"><span class="dot ${a[0]}"></span>${a[0]==='green'?'Verde':a[0]==='yellow'?'Amarillo':'Rojo'}</span><span class="compact">Prioridad</span></div><b>${a[1]}</b><div class="small">${a[2]}</div></div>`);
+  const tl=document.getElementById('timeline'); tl.innerHTML=''; p.timeline.forEach(t=>tl.innerHTML+=`<div class="timeline-item"><b>${t[0]}</b><div class="small">${t[1]}</div></div>`);
+  const rg=document.getElementById('reportsGrid'); rg.innerHTML=''; p.reports.forEach(r=>rg.innerHTML+=`<div class="report"><b>${r[0]}</b><div class="small">${r[1]}</div></div>`);
+}
+function renderQuestions(){
+  const p=processData[currentProcess]; const list=p.questions[currentProfile]||[]; document.getElementById('profileBadge').textContent='Perfil activo: '+currentProfile;
+  const ql=document.getElementById('questionList'); ql.innerHTML='';
+  list.forEach((item,idx)=>{const d=document.createElement('div'); d.className='question'+(idx===0?' active':''); d.innerHTML=`<h4>${item.question}</h4><p>${item.impact}</p>`; d.onclick=()=>{document.querySelectorAll('.question').forEach(x=>x.classList.remove('active')); d.classList.add('active'); showAnswer(item);}; ql.appendChild(d);});
+  if(list[0]) showAnswer(list[0]);
+}
+function showAnswer(item){
+  document.getElementById('answerTitle').textContent=item.question;
+  document.getElementById('answerText').textContent=item.answer+' Impacto: '+item.impact;
+  const fill=document.getElementById('answerFill'); fill.style.width=item.score+'%'; fill.className='fill '+(item.score>=85?'':item.score>=75?'yellow':'red');
+  document.getElementById('answerTraffic').innerHTML=lights(item.score>=85?'green':item.score>=75?'yellow':'red');
+  const bullets=document.getElementById('answerBullets'); bullets.innerHTML=''; item.bullets.forEach(b=>bullets.innerHTML+=`<div class="bullet">${b}</div>`);
+  const actions=document.getElementById('actionList'); actions.innerHTML=''; item.actions.forEach(a=>actions.innerHTML+=`<div class="action"><b>${a[0]}</b><div class="small">Responsable: ${a[1]} · <span class="pill ${a[2]==='Alta'?'p-high':a[2]==='Media'?'p-med':'p-low'}">${a[2]}</span></div></div>`);
+}
+function renderSimulator(){
+  const sg=document.getElementById('simGrid'); sg.innerHTML='';
+  Object.keys(simulators).forEach(key=>{const s=simulators[key]; const d=document.createElement('div'); d.className='simBtn'+(key===currentSim?' active':''); d.innerHTML=`<div class="tag">${s.tag}</div><h4>${s.title}</h4><p>${s.desc}</p>`; d.onclick=()=>setSim(key); sg.appendChild(d);});
+  const p=processData[currentProcess]; const s=simulators[currentSim];
+  document.getElementById('simPanel').innerHTML=`<h3 style="margin:0 0 8px">${s.title} aplicado a ${p.name}</h3><p style="margin:0;color:var(--muted)">${s.desc}</p><div class="bullet-grid">${s.bullets.map(b=>`<div class="bullet">${b}</div>`).join('')}${s.impact.map(b=>`<div class="bullet">${b}</div>`).join('')}</div><div class="action-list" style="margin-top:12px"><div class="action"><b>Respuesta simulada</b><div class="small">Para el proceso ${p.name}, ${currentSim} aporta visibilidad, contexto y automatización para reducir riesgo y acelerar decisiones.</div></div></div>`;
+}
+function lights(sig){return `<i class="${sig==='green'?'green on':'green'}"></i><i class="${sig==='yellow'?'yellow on':'yellow'}"></i><i class="${sig==='red'?'red on':'red'}"></i>`;}
+function signalClass(s){return s==='green'?'green':s==='yellow'?'yellow':'red';}
+function textSignalClass(t){return t==='Verde'?'green':t==='Amarillo'?'yellow':'red';}
+function animateKpis(){
+  const p=processData[currentProcess]; p.kpis.forEach((k,i)=>{const el=document.getElementById('kpi-'+i); if(!el) return; const base=parseFloat(el.dataset.base); const unit=el.dataset.unit; const jitter=(Math.random()*2-1)*1.2; let next=Math.max(0,Math.min(100,base+jitter)); if(unit==='pts') next=next.toFixed(0); else if(unit==='%') next=next.toFixed(0); else next=next.toFixed(0); el.textContent=next+unit; });
+}
+renderMenus(); renderProcess(); renderQuestions(); renderSimulator(); setInterval(animateKpis,2200);
+</script>
+</body>
+</html>
