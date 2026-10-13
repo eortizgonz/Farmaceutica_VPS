@@ -10,7 +10,14 @@ from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy.engine import URL, make_url
 
 from extensions import csrf, db, login_manager, migrate
-from forms import EmptyForm, LoginForm, RegistrationForm
+from forms import (
+    EmptyForm,
+    LoginForm,
+    PasswordResetForm,
+    PasswordResetRequestForm,
+    RegistrationForm,
+)
+from mail_service import send_password_reset_email
 from models import User
 
 
@@ -40,6 +47,12 @@ def create_app(test_config=None):
         SECRET_KEY=os.getenv("SECRET_KEY", "dev-only-change-me"),
         SQLALCHEMY_DATABASE_URI=get_database_url(),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        MAIL_SERVER=os.getenv("MAIL_SERVER", "smtp.gmail.com"),
+        MAIL_PORT=int(os.getenv("MAIL_PORT", "587")),
+        MAIL_USERNAME=os.getenv("MAIL_USERNAME", ""),
+        MAIL_PASSWORD=os.getenv("MAIL_PASSWORD", ""),
+        MAIL_DEFAULT_SENDER=os.getenv("MAIL_DEFAULT_SENDER", ""),
+        APP_BASE_URL=os.getenv("APP_BASE_URL", ""),
     )
     if test_config:
         app.config.update(test_config)
@@ -102,6 +115,42 @@ def create_app(test_config=None):
                 return redirect(url_for("index"))
             flash("Usuario/correo o contraseña incorrectos.", "error")
         return render_template("auth/login.html", form=form)
+
+    @app.route("/recuperar-password", methods=["GET", "POST"])
+    def request_password_reset():
+        if current_user.is_authenticated:
+            return redirect(url_for("index"))
+        form = PasswordResetRequestForm()
+        if form.validate_on_submit():
+            email = form.email.data.strip().lower()
+            user = db.session.scalar(db.select(User).where(User.email == email))
+            if user:
+                try:
+                    send_password_reset_email(user)
+                except Exception:
+                    app.logger.exception("No se pudo enviar el correo de recuperación")
+            flash(
+                "Si el correo está registrado, recibirás un enlace de recuperación.",
+                "success",
+            )
+            return redirect(url_for("login"))
+        return render_template("auth/request_reset.html", form=form)
+
+    @app.route("/restablecer-password/<token>", methods=["GET", "POST"])
+    def reset_password(token):
+        if current_user.is_authenticated:
+            return redirect(url_for("index"))
+        user = User.verify_reset_token(token)
+        if not user:
+            flash("El enlace es inválido o ya venció.", "error")
+            return redirect(url_for("request_password_reset"))
+        form = PasswordResetForm()
+        if form.validate_on_submit():
+            user.set_password(form.password.data)
+            db.session.commit()
+            flash("Contraseña actualizada. Ya puedes iniciar sesión.", "success")
+            return redirect(url_for("login"))
+        return render_template("auth/reset_password.html", form=form)
 
     @app.post("/logout")
     @login_required

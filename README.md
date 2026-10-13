@@ -95,3 +95,23 @@ docker compose logs --tail=100 app
 
 No elimine el volumen `postgres_data` durante una actualización: contiene la
 base de datos. Antes de cambios importantes, realice una copia de seguridad.
+
+## Recuperación de contraseña por Gmail
+
+La pantalla de acceso permite solicitar un enlace de recuperación por correo.
+El enlace firmado vence después de 60 minutos y se invalida al actualizar la
+contraseña. La respuesta de la aplicación no revela si un correo está registrado.
+
+Para utilizar Gmail active la verificación en dos pasos en la cuenta de Google y
+genere una contraseña de aplicación. Configure en `.env`:
+
+```text
+MAIL_SERVER=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=su_cuenta@gmail.com
+MAIL_PASSWORD=password_de_aplicacion_de_google
+MAIL_DEFAULT_SENDER=su_cuenta@gmail.com
+APP_BASE_URL=http://IP_DEL_VPS:8010
+```
+
+No utilice la contraseña normal de Gmail y no agregue `.env` al repositorio.

@@ -1,0 +1,7 @@
+{% extends "auth/base.html" %}{% block title %}Recuperar contraseña{% endblock %}{% block content %}
+<h1>Recuperar contraseña</h1><p class="subtitle">Te enviaremos un enlace de recuperación si el correo está registrado.</p>
+<form method="post" novalidate>{{ form.hidden_tag() }}
+  {{ form.email.label }}{{ form.email(type="email", autocomplete="email", autofocus=true) }}{% for error in form.email.errors %}<div class="errors">{{ error }}</div>{% endfor %}
+  {{ form.submit(class="button") }}
+</form><p class="foot"><a href="{{ url_for('login') }}">Volver al inicio de sesión</a></p>
+{% endblock %}

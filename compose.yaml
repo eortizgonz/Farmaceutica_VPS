@@ -28,6 +28,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-pharma_app}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD in .env}
       SECRET_KEY: ${SECRET_KEY:?Configure SECRET_KEY in .env}
+      MAIL_SERVER: ${MAIL_SERVER:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_DEFAULT_SENDER: ${MAIL_DEFAULT_SENDER:-}
+      APP_BASE_URL: ${APP_BASE_URL:-}
       FLASK_DEBUG: 0
     depends_on:
       db:

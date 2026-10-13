@@ -42,5 +42,19 @@ class LoginForm(FlaskForm):
     submit = SubmitField("Iniciar sesión")
 
 
+class PasswordResetRequestForm(FlaskForm):
+    email = StringField("Correo", validators=[DataRequired(), Email(), Length(max=255)])
+    submit = SubmitField("Enviar enlace de recuperación")
+
+
+class PasswordResetForm(FlaskForm):
+    password = PasswordField("Nueva contraseña", validators=[DataRequired(), Length(min=8, max=128)])
+    confirm_password = PasswordField(
+        "Confirmar nueva contraseña",
+        validators=[DataRequired(), EqualTo("password", message="Las contraseñas no coinciden.")],
+    )
+    submit = SubmitField("Actualizar contraseña")
+
+
 class EmptyForm(FlaskForm):
     submit = SubmitField("Cerrar sesión")

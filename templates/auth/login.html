@@ -4,5 +4,5 @@
   {{ form.identity.label }}{{ form.identity(autocomplete="username", autofocus=true) }}{% for error in form.identity.errors %}<div class="errors">{{ error }}</div>{% endfor %}
   {{ form.password.label }}{{ form.password(autocomplete="current-password") }}{% for error in form.password.errors %}<div class="errors">{{ error }}</div>{% endfor %}
   <div class="check">{{ form.remember() }}{{ form.remember.label }}</div>{{ form.submit(class="button") }}
-</form><p class="foot">¿Aún no tienes cuenta? <a href="{{ url_for('register') }}">Crear usuario</a></p>
+</form><p class="foot"><a href="{{ url_for('request_password_reset') }}">¿Olvidaste tu contraseña?</a></p><p class="foot">¿Aún no tienes cuenta? <a href="{{ url_for('register') }}">Crear usuario</a></p>
 {% endblock %}

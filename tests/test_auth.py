@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 from app import create_app
 from extensions import db
@@ -79,6 +80,44 @@ class AuthFlowTestCase(unittest.TestCase):
         body = response.get_data(as_text=True)
         self.assertIn("Ya existe una cuenta con este correo", body)
         self.assertIn("Este username ya está en uso", body)
+
+    @patch("app.send_password_reset_email")
+    def test_password_reset_flow(self, send_email):
+        user = User(name="Ana", email="ana@example.com", username="ana")
+        user.set_password("ClaveAnterior123")
+        db.session.add(user)
+        db.session.commit()
+
+        response = self.client.post(
+            "/recuperar-password",
+            data={"email": "ANA@example.com"},
+            follow_redirects=True,
+        )
+        self.assertIn("Si el correo está registrado", response.get_data(as_text=True))
+        send_email.assert_called_once_with(user)
+
+        token = user.get_reset_token()
+        response = self.client.post(
+            f"/restablecer-password/{token}",
+            data={
+                "password": "ClaveNueva456",
+                "confirm_password": "ClaveNueva456",
+            },
+            follow_redirects=True,
+        )
+        self.assertIn("Contraseña actualizada", response.get_data(as_text=True))
+        self.assertTrue(user.check_password("ClaveNueva456"))
+        self.assertIsNone(User.verify_reset_token(token))
+
+    @patch("app.send_password_reset_email")
+    def test_password_reset_does_not_reveal_unknown_email(self, send_email):
+        response = self.client.post(
+            "/recuperar-password",
+            data={"email": "missing@example.com"},
+            follow_redirects=True,
+        )
+        self.assertIn("Si el correo está registrado", response.get_data(as_text=True))
+        send_email.assert_not_called()
 
 
 if __name__ == "__main__":
