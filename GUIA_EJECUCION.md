@@ -12,7 +12,7 @@
 1. Copiar `.env.docker.example` como `.env` y reemplazar todos los secretos.
 2. Ejecutar `docker compose up -d --build`.
 3. Validar con `docker compose ps` y `docker compose logs -f app`.
-4. Acceder localmente a `http://127.0.0.1:8000` o configurar Nginx en el VPS.
+4. En el VPS, acceder mediante `http://IP_DEL_VPS:8010`.
 
 El contenedor PostgreSQL crea la base automáticamente y el contenedor de la
 aplicación aplica las migraciones antes de iniciar Gunicorn.

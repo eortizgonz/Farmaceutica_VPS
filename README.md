@@ -80,8 +80,9 @@ docker compose logs -f app
 ```
 
 PostgreSQL crea la base indicada por `POSTGRES_DB` durante el primer arranque y
-la aplicación ejecuta `flask db upgrade` automáticamente. El puerto de la app
-solo se publica en `127.0.0.1` para utilizar Nginx como proxy inverso.
+la aplicación ejecuta `flask db upgrade` automáticamente. El puerto predeterminado
+de la app es `8010` y queda publicado en todas las interfaces del VPS para acceso
+directo mediante `http://IP_DEL_VPS:8010`.
 
 Comandos habituales:
 
