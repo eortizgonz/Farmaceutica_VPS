@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% endblock %} · Pharma & MedDev AI Copilot</title>
+  <style>
+    :root{--text:#17324d;--muted:#69809a;--primary:#2d77ff;--line:#dbe7f3;--error:#b42318;--success:#087a55}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--text);background:radial-gradient(circle at top left,#fff 0,#edf6ff 48%,#e6f0fb 100%)}.shell{width:min(100%,460px)}.brand{text-align:center;margin-bottom:20px}.logo{width:64px;height:64px;margin:0 auto 12px;border-radius:20px;background:linear-gradient(135deg,#7ce2d8,#56a3ff 55%,#9b7fff);box-shadow:0 16px 35px rgba(45,119,255,.2)}h1{font-size:25px;margin:0 0 8px}.subtitle{color:var(--muted);margin:0}.card{margin-top:20px;padding:28px;border:1px solid rgba(255,255,255,.7);border-radius:24px;background:rgba(255,255,255,.9);box-shadow:0 22px 55px rgba(24,66,112,.13)}label{display:block;font-size:13px;font-weight:800;margin:15px 0 7px}input[type=text],input[type=email],input[type=password]{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;font:inherit;color:var(--text);background:#fbfdff}input:focus{outline:3px solid rgba(45,119,255,.13);border-color:#79aaf7}.button{width:100%;border:0;border-radius:13px;padding:13px;margin-top:20px;background:linear-gradient(135deg,#2d77ff,#14b8a6);color:#fff;font-weight:800;cursor:pointer}.errors{margin:6px 0 0;color:var(--error);font-size:12px}.flash{padding:11px 13px;border-radius:12px;margin-bottom:12px;background:#eef5ff;font-size:13px}.flash.error{background:#fff0ef;color:var(--error)}.flash.success{background:#ebfaf4;color:var(--success)}.foot{text-align:center;color:var(--muted);font-size:13px;margin:18px 0 0}.foot a{color:var(--primary);font-weight:800;text-decoration:none}.check{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;color:var(--muted)}.check label{margin:0;font-weight:600}
+  </style>
+</head>
+<body><div class="shell"><div class="brand"><div class="logo"></div><h1>Pharma & MedDev AI Copilot</h1><p class="subtitle">Acceso seguro al centro de gestión</p></div><main class="card">
+  {% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}{% endwith %}
+  {% block content %}{% endblock %}
+</main></div></body></html>

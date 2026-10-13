@@ -4,3 +4,8 @@
 - Datos simulados embebidos en JavaScript para KPIs, preguntas, respuestas y simuladores.
 - Navegación principal por proceso, perfil y tecnología SAP.
 - Actualización dinámica del contenido sin recargar la página.
+- PostgreSQL como almacenamiento persistente de usuarios.
+- SQLAlchemy como ORM y Flask-Login para la sesión autenticada.
+- Flask-WTF para validación de formularios y protección CSRF.
+- Contraseñas almacenadas exclusivamente como hashes seguros de Werkzeug.
+- Flask-Migrate/Alembic para versionar y aplicar cambios del esquema PostgreSQL.

@@ -25,6 +25,7 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-grad
 .vmenu button span{display:block;color:#d5e8ff;font-weight:500;font-size:12px;margin-top:5px}
 .vmenu button:hover,.vmenu button.active,.tool-btn:hover{transform:translateY(-1px);background:linear-gradient(135deg,rgba(86,163,255,.95),rgba(20,184,166,.80));box-shadow:0 10px 26px rgba(0,0,0,.18)}
 .sidebar .footer-note{margin-top:16px;padding:14px;border-radius:18px;background:rgba(255,255,255,.08);font-size:12px;line-height:1.45;color:#d5e6fa}
+.user-card{margin-top:18px;padding:14px;border-radius:18px;background:rgba(255,255,255,.1)}.user-card b,.user-card span{display:block}.user-card span{margin-top:4px;color:#cfe2f8;font-size:12px}.logout-btn{width:100%;margin-top:11px;border:1px solid rgba(255,255,255,.25);border-radius:11px;padding:9px;background:transparent;color:#fff;font-weight:700;cursor:pointer}.logout-btn:hover{background:rgba(255,255,255,.12)}
 .main{padding:22px 22px 60px;overflow:auto}
 .topbar{display:grid;grid-template-columns:1.25fr .75fr;gap:16px;align-items:stretch}
 .glass,.card,.kpi,.module,.question,.answer,.action,.simPanel,.metric,.timeline-item{background:var(--card);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.56);border-radius:var(--radius);box-shadow:var(--shadow)}
@@ -85,6 +86,10 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-grad
       <button class="tool-btn" onclick="scrollToId('qa')">Preguntas y respuestas</button>
       <button class="tool-btn" onclick="scrollToId('simulators')">Simuladores integrados</button>
       <button class="tool-btn" onclick="scrollToId('reports')">Reportes y exportables</button>
+    </div>
+    <div class="user-card">
+      <b>{{ current_user.name }}</b><span>@{{ current_user.username }}</span>
+      <form method="post" action="{{ url_for('logout') }}">{{ logout_form.hidden_tag() }}<button class="logout-btn" type="submit">Cerrar sesión</button></form>
     </div>
     <div class="footer-note">Aplicación demostrativa expandida: integra navegación por proceso, cockpit por perfil, mini apps conectadas, respuesta automática, alertas, roadmap y experiencia visual profesional.</div>
   </aside>

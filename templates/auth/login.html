@@ -1,0 +1,8 @@
+{% extends "auth/base.html" %}{% block title %}Iniciar sesión{% endblock %}{% block content %}
+<h1>Bienvenido</h1><p class="subtitle">Ingresa con tu username o correo.</p>
+<form method="post" novalidate>{{ form.hidden_tag() }}
+  {{ form.identity.label }}{{ form.identity(autocomplete="username", autofocus=true) }}{% for error in form.identity.errors %}<div class="errors">{{ error }}</div>{% endfor %}
+  {{ form.password.label }}{{ form.password(autocomplete="current-password") }}{% for error in form.password.errors %}<div class="errors">{{ error }}</div>{% endfor %}
+  <div class="check">{{ form.remember() }}{{ form.remember.label }}</div>{{ form.submit(class="button") }}
+</form><p class="foot">¿Aún no tienes cuenta? <a href="{{ url_for('register') }}">Crear usuario</a></p>
+{% endblock %}

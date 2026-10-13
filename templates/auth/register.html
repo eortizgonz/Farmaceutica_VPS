@@ -1,0 +1,11 @@
+{% extends "auth/base.html" %}{% block title %}Crear usuario{% endblock %}{% block content %}
+<h1>Crear usuario</h1><p class="subtitle">Completa tus datos para acceder a la aplicación.</p>
+<form method="post" novalidate>{{ form.hidden_tag() }}
+  {{ form.name.label }}{{ form.name(autocomplete="name", autofocus=true) }}{% for error in form.name.errors %}<div class="errors">{{ error }}</div>{% endfor %}
+  {{ form.email.label }}{{ form.email(type="email", autocomplete="email") }}{% for error in form.email.errors %}<div class="errors">{{ error }}</div>{% endfor %}
+  {{ form.username.label }}{{ form.username(autocomplete="username") }}{% for error in form.username.errors %}<div class="errors">{{ error }}</div>{% endfor %}
+  {{ form.password.label }}{{ form.password(autocomplete="new-password") }}{% for error in form.password.errors %}<div class="errors">{{ error }}</div>{% endfor %}
+  {{ form.confirm_password.label }}{{ form.confirm_password(autocomplete="new-password") }}{% for error in form.confirm_password.errors %}<div class="errors">{{ error }}</div>{% endfor %}
+  {{ form.submit(class="button") }}
+</form><p class="foot">¿Ya tienes cuenta? <a href="{{ url_for('login') }}">Iniciar sesión</a></p>
+{% endblock %}
