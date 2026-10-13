@@ -49,3 +49,48 @@ Revise siempre la migración generada antes de ejecutar `db upgrade` en producci
 ```bash
 python -m unittest discover -s tests -v
 ```
+
+## Despliegue con Docker en un VPS
+
+El archivo `compose.yaml` levanta dos servicios:
+
+- `db`: PostgreSQL con datos persistentes en el volumen `postgres_data`.
+- `app`: Flask servido por Gunicorn; aplica las migraciones antes de iniciar.
+
+En el VPS:
+
+```bash
+git clone URL_DEL_REPOSITORIO
+cd NOMBRE_DEL_REPOSITORIO
+cp .env.docker.example .env
+```
+
+Edite `.env` y configure contraseñas únicas. Puede generar `SECRET_KEY` con:
+
+```bash
+python3 -c "import secrets; print(secrets.token_urlsafe(48))"
+```
+
+Construya e inicie los contenedores:
+
+```bash
+docker compose up -d --build
+docker compose ps
+docker compose logs -f app
+```
+
+PostgreSQL crea la base indicada por `POSTGRES_DB` durante el primer arranque y
+la aplicación ejecuta `flask db upgrade` automáticamente. El puerto de la app
+solo se publica en `127.0.0.1` para utilizar Nginx como proxy inverso.
+
+Comandos habituales:
+
+```bash
+docker compose pull
+docker compose up -d --build
+docker compose exec app python -m flask --app app db current
+docker compose logs --tail=100 app
+```
+
+No elimine el volumen `postgres_data` durante una actualización: contiene la
+base de datos. Antes de cambios importantes, realice una copia de seguridad.

@@ -7,3 +7,12 @@
 6. Crear o actualizar las tablas con `flask --app app db upgrade`.
 7. Ejecutar `python app.py` e ingresar a `http://127.0.0.1:8000`.
 8. Crear el primer usuario desde la pantalla de registro.
+
+## Ejecución con Docker
+1. Copiar `.env.docker.example` como `.env` y reemplazar todos los secretos.
+2. Ejecutar `docker compose up -d --build`.
+3. Validar con `docker compose ps` y `docker compose logs -f app`.
+4. Acceder localmente a `http://127.0.0.1:8000` o configurar Nginx en el VPS.
+
+El contenedor PostgreSQL crea la base automáticamente y el contenedor de la
+aplicación aplica las migraciones antes de iniciar Gunicorn.

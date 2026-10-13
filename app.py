@@ -4,7 +4,7 @@ import click
 import psycopg
 from psycopg import sql
 from dotenv import load_dotenv
-from flask import Flask, flash, redirect, render_template, url_for
+from flask import Flask, flash, jsonify, redirect, render_template, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 
 from sqlalchemy.engine import URL, make_url
@@ -60,6 +60,10 @@ def create_app(test_config=None):
     @login_required
     def index():
         return render_template("index.html", logout_form=EmptyForm())
+
+    @app.get("/health")
+    def health():
+        return jsonify(status="ok")
 
     @app.route("/registro", methods=["GET", "POST"])
     def register():
