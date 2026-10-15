@@ -1,10 +1,11 @@
 import os
+import time
 
 import click
 import psycopg
 from psycopg import sql
 from dotenv import load_dotenv
-from flask import Flask, flash, jsonify, redirect, render_template, url_for
+from flask import Flask, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 
 from sqlalchemy.engine import URL, make_url
@@ -16,9 +17,19 @@ from forms import (
     PasswordResetForm,
     PasswordResetRequestForm,
     RegistrationForm,
+    SOPQuestionForm,
+    SOPUploadForm,
 )
 from mail_service import send_password_reset_email
 from models import User
+from rag_service import answer_question, ingest_document
+from predictive_service import (
+    append_simulated_snapshot,
+    backfill_simulated_history,
+    latest_machine_snapshot,
+    recalculate_historical_risks,
+    seed_demo_machines,
+)
 
 
 load_dotenv()
@@ -53,6 +64,12 @@ def create_app(test_config=None):
         MAIL_PASSWORD=os.getenv("MAIL_PASSWORD", ""),
         MAIL_DEFAULT_SENDER=os.getenv("MAIL_DEFAULT_SENDER", ""),
         APP_BASE_URL=os.getenv("APP_BASE_URL", ""),
+        OLLAMA_BASE_URL=os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434"),
+        OLLAMA_CHAT_MODEL=os.getenv("OLLAMA_CHAT_MODEL", "llama3.1:8b"),
+        OLLAMA_EMBED_MODEL=os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text"),
+        OLLAMA_TIMEOUT=int(os.getenv("OLLAMA_TIMEOUT", "300")),
+        OLLAMA_MAX_TOKENS=int(os.getenv("OLLAMA_MAX_TOKENS", "220")),
+        MAX_CONTENT_LENGTH=25 * 1024 * 1024,
     )
     if test_config:
         app.config.update(test_config)
@@ -72,11 +89,105 @@ def create_app(test_config=None):
     @app.route("/")
     @login_required
     def index():
-        return render_template("index.html", logout_form=EmptyForm())
+        return render_template("index.html", logout_form=EmptyForm(), chat_form=EmptyForm())
+
+    @app.get("/predictive")
+    @login_required
+    def predictive_dashboard():
+        rows = latest_machine_snapshot()
+        counts = {"Healthy": 0, "Warning": 0, "Critical": 0}
+        for _, reading in rows:
+            counts[reading.health_status] += 1
+        average_risk = round(sum(reading.failure_probability for _, reading in rows) / len(rows), 1) if rows else 0
+        return render_template(
+            "predictive.html", rows=rows, counts=counts, average_risk=average_risk,
+            highest=rows[0] if rows else None, logout_form=EmptyForm(),
+        )
+
+    @app.get("/api/predictive/snapshot")
+    @login_required
+    def predictive_snapshot_api():
+        rows = latest_machine_snapshot()
+        counts = {"Healthy": 0, "Warning": 0, "Critical": 0}
+        machines = []
+        for machine, reading in rows:
+            counts[reading.health_status] += 1
+            machines.append({
+                "code": machine.code,
+                "name": machine.name,
+                "area": machine.area,
+                "usage_hours": reading.usage_hours,
+                "vibration": reading.vibration,
+                "temperature": reading.temperature,
+                "current": reading.current,
+                "rpm": reading.rpm,
+                "pressure": reading.pressure,
+                "failure_probability": reading.failure_probability,
+                "health_status": reading.health_status,
+                "explanation": reading.explanation,
+                "recorded_at": reading.recorded_at.isoformat(),
+                "limits": {
+                    "vibration": machine.max_vibration,
+                    "temperature": machine.max_temperature,
+                    "current": machine.rated_current,
+                    "pressure": machine.max_pressure,
+                },
+            })
+        average = round(sum(item["failure_probability"] for item in machines) / len(machines), 1) if machines else 0
+        return jsonify(
+            machines=machines,
+            summary={**counts, "average_risk": average, "total": len(machines)},
+            updated_at=max((item["recorded_at"] for item in machines), default=None),
+        )
 
     @app.get("/health")
     def health():
         return jsonify(status="ok")
+
+    @app.route("/sop", methods=["GET", "POST"])
+    @login_required
+    def sop_assistant():
+        upload_form = SOPUploadForm(prefix="upload")
+        question_form = SOPQuestionForm(prefix="question")
+        answer = None
+        sources = []
+        if upload_form.submit.data and upload_form.validate_on_submit():
+            try:
+                count = ingest_document(upload_form.document.data)
+                flash(f"Documento indexado en {count} fragmentos.", "success")
+                return redirect(url_for("sop_assistant"))
+            except Exception as error:
+                app.logger.exception("Error indexando documento")
+                flash(str(error), "error")
+        elif question_form.submit.data and question_form.validate_on_submit():
+            try:
+                answer, sources = answer_question(question_form.question.data, question_form.mode.data)
+            except Exception as error:
+                app.logger.exception("Error consultando SOP")
+                flash(str(error), "error")
+        return render_template("sop.html", upload_form=upload_form, question_form=question_form, answer=answer, sources=sources)
+
+    @app.post("/api/sop/chat")
+    @login_required
+    def sop_chat_api():
+        payload = request.get_json(silent=True) or {}
+        question = str(payload.get("question", "")).strip()
+        mode = payload.get("mode", "sop")
+        if len(question) < 5 or len(question) > 2000:
+            return jsonify(error="La pregunta debe tener entre 5 y 2000 caracteres."), 400
+        if mode not in {"sop", "troubleshooting"}:
+            return jsonify(error="Modo de consulta inválido."), 400
+        try:
+            answer, sources = answer_question(question, mode)
+            return jsonify(answer=answer, sources=sources)
+        except ValueError as error:
+            return jsonify(error=str(error)), 400
+        except RuntimeError as error:
+            app.logger.exception("Ollama no disponible")
+            return jsonify(error=str(error)), 503
+        except Exception:
+            app.logger.exception("Error en el chat SOP")
+            return jsonify(error="No fue posible procesar la consulta."), 500
 
     @app.route("/registro", methods=["GET", "POST"])
     def register():
@@ -193,6 +304,75 @@ def create_app(test_config=None):
                 click.echo(f"Base '{database_name}' creada correctamente.")
         except psycopg.Error as error:
             raise click.ClickException(f"No fue posible crear la base: {error}") from error
+
+    @app.cli.command("ingest-documents")
+    @click.argument("folder", type=click.Path(exists=True, file_okay=False, path_type=str))
+    def ingest_documents_command(folder):
+        """Indexa en pgvector todos los PDF, TXT y MD de una carpeta."""
+        from pathlib import Path
+        from werkzeug.datastructures import FileStorage
+
+        paths = sorted(path for path in Path(folder).iterdir() if path.suffix.lower() in {".pdf", ".txt", ".md"} and path.name.lower() != "readme.md")
+        if not paths:
+            raise click.ClickException("No se encontraron documentos compatibles.")
+        for path in paths:
+            with path.open("rb") as stream:
+                count = ingest_document(FileStorage(stream=stream, filename=path.name))
+            click.echo(f"{path.name}: {count} fragmentos indexados")
+        click.echo(f"Carga completada: {len(paths)} documentos.")
+
+    @app.cli.command("seed-predictive-data")
+    def seed_predictive_data_command():
+        """Crea o actualiza las 20 máquinas sin borrar su historial."""
+        count = seed_demo_machines()
+        click.echo(f"Datos predictivos cargados: {count} máquinas.")
+
+    @app.cli.command("capture-machine-readings")
+    @click.option("--seed", type=int, default=None, help="Semilla opcional para reproducibilidad.")
+    def capture_machine_readings_command(seed):
+        """Inserta una nueva lectura simulada para cada máquina."""
+        try:
+            count = append_simulated_snapshot(seed=seed)
+        except ValueError as error:
+            raise click.ClickException(str(error)) from error
+        click.echo(f"Nueva captura completada: {count} lecturas.")
+
+    @app.cli.command("run-reading-collector")
+    @click.option("--interval-seconds", type=click.IntRange(min=5, max=86400), default=15, show_default=True)
+    @click.option("--iterations", type=click.IntRange(min=0), default=0, hidden=True)
+    def run_reading_collector_command(interval_seconds, iterations):
+        """Captura lecturas continuamente; cero iteraciones significa ejecución indefinida."""
+        seed_demo_machines()
+        click.echo(f"Recolector activo: una captura cada {interval_seconds} segundos. Ctrl+C para detener.")
+        completed = 0
+        try:
+            while not iterations or completed < iterations:
+                count = append_simulated_snapshot()
+                completed += 1
+                click.echo(f"Captura {completed}: {count} lecturas insertadas.")
+                if not iterations or completed < iterations:
+                    time.sleep(interval_seconds)
+        except KeyboardInterrupt:
+            click.echo("Recolector detenido.")
+
+    @app.cli.command("backfill-predictive-history")
+    @click.option("--days", type=click.IntRange(min=1, max=730), default=90, show_default=True)
+    @click.option("--interval-minutes", type=click.IntRange(min=5, max=1440), default=60, show_default=True)
+    @click.option("--seed", type=int, default=2026, show_default=True)
+    def backfill_predictive_history_command(days, interval_minutes, seed):
+        """Genera lecturas históricas anteriores sin duplicar el periodo existente."""
+        try:
+            count = backfill_simulated_history(days, interval_minutes, seed)
+        except ValueError as error:
+            raise click.ClickException(str(error)) from error
+        click.echo(f"Historial completado: {count} lecturas nuevas.")
+
+    @app.cli.command("recalculate-machine-risks")
+    @click.option("--batch-size", type=click.IntRange(min=100, max=10000), default=1000, show_default=True)
+    def recalculate_machine_risks_command(batch_size):
+        """Recalcula riesgo y estado de todo el historial con las reglas vigentes."""
+        count = recalculate_historical_risks(batch_size)
+        click.echo(f"Riesgos recalculados: {count} lecturas.")
 
     return app
 

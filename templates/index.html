@@ -69,6 +69,8 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-grad
 .report{padding:14px;border-radius:18px;background:linear-gradient(180deg,#fff,#f7fbff);border:1px solid #dce8f3}.report b{display:block;margin-bottom:6px}
 .footer-cta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px}.cta{border:0;border-radius:18px;padding:15px;background:linear-gradient(135deg,#2d77ff,#14b8a6);color:#fff;font-weight:800;cursor:pointer}
 .compact{font-size:11px;color:#72879f}
+.ai-launcher{position:fixed;right:24px;bottom:24px;z-index:1000;width:58px;height:58px;border:0;border-radius:50%;background:linear-gradient(135deg,#2d77ff,#14b8a6);color:#fff;font-size:25px;cursor:pointer;box-shadow:0 16px 35px rgba(20,70,130,.3)}
+.ai-chat{position:fixed;right:24px;bottom:94px;z-index:999;width:min(390px,calc(100vw - 32px));height:520px;display:none;grid-template-rows:auto 1fr auto;background:#fff;border:1px solid #d8e6f3;border-radius:22px;box-shadow:0 24px 60px rgba(15,39,65,.28);overflow:hidden}.ai-chat.open{display:grid}.ai-head{display:flex;justify-content:space-between;align-items:center;padding:15px 17px;background:linear-gradient(135deg,#173f69,#157f87);color:#fff}.ai-head b{display:block}.ai-head small{opacity:.8}.ai-close{border:0;background:transparent;color:#fff;font-size:24px;cursor:pointer}.ai-messages{padding:15px;overflow:auto;background:#f6faff}.ai-message{max-width:88%;padding:11px 13px;margin-bottom:10px;border-radius:15px;font-size:13px;line-height:1.48;white-space:pre-wrap}.ai-message.user{margin-left:auto;background:#2d77ff;color:#fff;border-bottom-right-radius:4px}.ai-message.assistant{background:#fff;border:1px solid #dbe7f3;border-bottom-left-radius:4px}.ai-message.error{background:#fff0ef;color:#a62b22}.ai-sources{margin-top:8px;padding-top:7px;border-top:1px solid #e2eaf2;font-size:11px;color:#58718b}.ai-compose{padding:12px;border-top:1px solid #dbe7f3;background:#fff}.ai-compose select,.ai-compose textarea{width:100%;box-sizing:border-box;border:1px solid #cfdeec;border-radius:10px;padding:9px;font:inherit}.ai-compose textarea{height:68px;resize:none;margin-top:8px}.ai-send{width:100%;border:0;border-radius:10px;padding:10px;margin-top:8px;background:#2d77ff;color:#fff;font-weight:800;cursor:pointer}.ai-send:disabled{opacity:.55;cursor:wait}
 @media (max-width:1400px){.summary-strip,.kpi-grid,.report-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.flow{grid-template-columns:repeat(3,minmax(0,1fr))}.topbar,.main-grid,.qa-grid,.grid-2{grid-template-columns:1fr}.module-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sim-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-width:980px){.app{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.hero-stats,.summary-strip,.kpi-grid,.module-grid,.sim-grid,.report-grid,.footer-cta,.bullet-grid,.score-grid{grid-template-columns:1fr 1fr}.bar-row{grid-template-columns:1fr}.flow{grid-template-columns:1fr 1fr}.main{padding:16px}}
 @media (max-width:640px){.hero h2{font-size:26px}.hero-stats,.summary-strip,.kpi-grid,.module-grid,.sim-grid,.report-grid,.footer-cta,.bullet-grid,.score-grid,.flow{grid-template-columns:1fr}}
@@ -78,11 +80,18 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-grad
 <div class="app">
   <aside class="sidebar">
     <div class="brand"><div class="logo"></div><div><h1>Pharma & MedDev<br>AI Copilot</h1><small>UltraApp · Cloud UX · Semáforo</small></div></div>
-    <div class="menu-title">Proceso</div><div class="vmenu" id="processMenu"></div>
+    <div class="menu-title">Proceso</div>
+    <div class="vmenu" id="processMenu"></div>
+    <div class="vmenu" style="margin-top:9px">
+      <a href="{{ url_for('predictive_dashboard') }}" style="text-decoration:none">
+        <button class="tool-btn" style="width:100%">Analítica predictiva<span>Salud, riesgo de falla y diagnóstico de máquinas</span></button>
+      </a>
+    </div>
     <div class="menu-title">Perfil</div><div class="vmenu" id="profileMenu"></div>
     <div class="menu-title">Simuladores SAP</div><div class="vmenu" id="sapMenu"></div>
     <div class="menu-title">Accesos rápidos</div>
     <div class="vmenu">
+      <a href="{{ url_for('sop_assistant') }}" style="text-decoration:none"><button class="tool-btn" style="width:100%">Asistente SOP + IA</button></a>
       <button class="tool-btn" onclick="scrollToId('qa')">Preguntas y respuestas</button>
       <button class="tool-btn" onclick="scrollToId('simulators')">Simuladores integrados</button>
       <button class="tool-btn" onclick="scrollToId('reports')">Reportes y exportables</button>
@@ -176,6 +185,16 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-grad
     </section>
   </main>
 </div>
+<button class="ai-launcher" id="aiLauncher" type="button" aria-label="Abrir asistente IA">✦</button>
+<section class="ai-chat" id="aiChat" aria-label="Asistente SOP">
+  <header class="ai-head"><div><b>Copiloto SOP</b><small>Ollama + PostgreSQL/pgvector</small></div><button class="ai-close" id="aiClose" type="button" aria-label="Cerrar">×</button></header>
+  <div class="ai-messages" id="aiMessages"><div class="ai-message assistant">Hola. Puedo consultar los SOP indexados o guiar un troubleshooting basado en documentos aprobados.</div></div>
+  <form class="ai-compose" id="aiForm">{{ chat_form.csrf_token }}
+    <select id="aiMode" aria-label="Modo"><option value="sop">Consulta SOP</option><option value="troubleshooting">Troubleshooting guiado</option></select>
+    <textarea id="aiQuestion" maxlength="2000" required placeholder="Escribe una pregunta sobre tus procedimientos..."></textarea>
+    <button class="ai-send" id="aiSend" type="submit">Consultar con IA</button>
+  </form>
+</section>
 <script>
 const profiles=['Operacional','Financiero','Ejecutivo','Comercial'];
 const simulators={
@@ -349,6 +368,11 @@ function animateKpis(){
   const p=processData[currentProcess]; p.kpis.forEach((k,i)=>{const el=document.getElementById('kpi-'+i); if(!el) return; const base=parseFloat(el.dataset.base); const unit=el.dataset.unit; const jitter=(Math.random()*2-1)*1.2; let next=Math.max(0,Math.min(100,base+jitter)); if(unit==='pts') next=next.toFixed(0); else if(unit==='%') next=next.toFixed(0); else next=next.toFixed(0); el.textContent=next+unit; });
 }
 renderMenus(); renderProcess(); renderQuestions(); renderSimulator(); setInterval(animateKpis,2200);
+const aiChat=document.getElementById('aiChat'), aiMessages=document.getElementById('aiMessages'), aiForm=document.getElementById('aiForm'), aiQuestion=document.getElementById('aiQuestion'), aiSend=document.getElementById('aiSend');
+document.getElementById('aiLauncher').onclick=()=>{aiChat.classList.toggle('open'); if(aiChat.classList.contains('open')) aiQuestion.focus();};
+document.getElementById('aiClose').onclick=()=>aiChat.classList.remove('open');
+function addChatMessage(text,type,sources=[]){const el=document.createElement('div');el.className='ai-message '+type;el.textContent=text;if(sources.length){const src=document.createElement('div');src.className='ai-sources';src.textContent='Fuentes: '+sources.join(' · ');el.appendChild(src);}aiMessages.appendChild(el);aiMessages.scrollTop=aiMessages.scrollHeight;}
+aiForm.onsubmit=async event=>{event.preventDefault();const question=aiQuestion.value.trim();if(question.length<5)return;addChatMessage(question,'user');aiQuestion.value='';aiSend.disabled=true;aiSend.textContent='Consultando...';try{const response=await fetch('/api/sop/chat',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':aiForm.querySelector('[name=csrf_token]').value},body:JSON.stringify({question,mode:document.getElementById('aiMode').value})});const data=await response.json();if(!response.ok)throw new Error(data.error||'No fue posible consultar la IA.');addChatMessage(data.answer,'assistant',data.sources||[]);}catch(error){addChatMessage(error.message,'error');}finally{aiSend.disabled=false;aiSend.textContent='Consultar con IA';}};
 </script>
 </body>
 </html>

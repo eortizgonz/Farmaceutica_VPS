@@ -1,4 +1,6 @@
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileAllowed, FileField, FileRequired
+from wtforms import SelectField, TextAreaField
 from wtforms import BooleanField, PasswordField, StringField, SubmitField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, Regexp, ValidationError
 
@@ -58,3 +60,14 @@ class PasswordResetForm(FlaskForm):
 
 class EmptyForm(FlaskForm):
     submit = SubmitField("Cerrar sesión")
+
+
+class SOPUploadForm(FlaskForm):
+    document = FileField("Documento", validators=[FileRequired(), FileAllowed(["pdf", "txt", "md"], "Solo PDF, TXT o Markdown.")])
+    submit = SubmitField("Indexar documento")
+
+
+class SOPQuestionForm(FlaskForm):
+    mode = SelectField("Modo", choices=[("sop", "Consulta SOP"), ("troubleshooting", "Troubleshooting guiado")])
+    question = TextAreaField("Pregunta", validators=[DataRequired(), Length(min=5, max=2000)])
+    submit = SubmitField("Consultar con IA")

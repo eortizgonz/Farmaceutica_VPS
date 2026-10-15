@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Analítica predictiva · Pharma AI Copilot</title>
+<style>
+:root{--navy:#102b48;--blue:#2d77ff;--teal:#14b8a6;--bg:#edf4fb;--card:#fff;--text:#17324d;--muted:#69809a;--line:#dbe7f3;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-gradient(circle at top left,#fff,#edf4fb 50%,#e5eef9);color:var(--text)}
+.layout{display:grid;grid-template-columns:250px 1fr;min-height:100vh}.side{background:linear-gradient(180deg,#0f2741,#143a61);color:#fff;padding:24px 18px;display:flex;flex-direction:column}.brand{display:flex;gap:11px;align-items:center;padding-bottom:20px;border-bottom:1px solid #ffffff20}.logo{width:44px;height:44px;border-radius:15px;background:linear-gradient(135deg,#7ce2d8,#56a3ff 55%,#9b7fff)}.brand b{display:block}.brand small{color:#cfe3fa}.nav{display:grid;gap:9px;margin-top:25px}.nav a{padding:12px;border-radius:13px;color:#d9eaff;text-decoration:none;font-weight:700;font-size:13px}.nav a:hover,.nav a.active{background:linear-gradient(135deg,#2d77ff,#14b8a6);color:#fff}.side-foot{margin-top:auto}.user{padding:13px;border-radius:14px;background:#ffffff12;font-size:13px}.logout{width:100%;margin-top:10px;padding:9px;border:1px solid #ffffff40;border-radius:9px;background:transparent;color:#fff;cursor:pointer}.main{padding:28px;overflow:auto}.eyebrow{color:var(--teal);font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase}.heading{display:flex;justify-content:space-between;gap:18px;align-items:end}.heading h1{margin:7px 0 4px;font-size:30px}.heading p{margin:0;color:var(--muted)}.model-note{max-width:360px;padding:11px 14px;border-radius:12px;background:#eaf4ff;color:#315b82;font-size:12px;line-height:1.4}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:22px 0}.kpi{background:#ffffffdd;border:1px solid #fff;border-top:4px solid var(--blue);border-radius:19px;padding:17px;box-shadow:0 15px 35px #18427012}.kpi.healthy{border-top-color:var(--green)}.kpi.warning{border-top-color:var(--yellow)}.kpi.critical{border-top-color:var(--red)}.kpi small{color:var(--muted);font-weight:700}.kpi strong{display:block;font-size:30px;margin:7px 0}.recommend{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:18px 20px;border-radius:18px;background:linear-gradient(120deg,#123c68,#157f87);color:#fff;box-shadow:0 16px 35px #173f6925}.recommend p{margin:5px 0 0;color:#d9eff5;font-size:13px}.panel{margin-top:18px;background:#ffffffdd;border:1px solid #fff;border-radius:20px;box-shadow:0 18px 40px #18427012;overflow:hidden}.panel-head{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px 20px;border-bottom:1px solid var(--line)}.panel-head h2{font-size:18px;margin:0}.filters{display:flex;gap:7px}.filter{border:1px solid var(--line);background:#fff;padding:7px 11px;border-radius:999px;color:var(--text);cursor:pointer;font-weight:700}.filter.active{background:var(--navy);color:#fff}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:1160px}th{text-align:left;padding:12px 13px;background:#f4f8fc;color:#627990;font-size:10px;text-transform:uppercase;letter-spacing:.08em}td{padding:14px 13px;border-top:1px solid #e7eef6;font-size:12px}tr:hover td{background:#f8fbff}.machine b{display:block;font-size:13px}.machine small{color:var(--muted)}.risk{min-width:115px}.track{height:7px;border-radius:9px;background:#e6edf5;overflow:hidden;margin-bottom:5px}.fill{height:100%;background:linear-gradient(90deg,var(--green),var(--yellow),var(--red));border-radius:9px}.status{display:inline-flex;padding:6px 9px;border-radius:999px;font-weight:900}.status.Healthy{background:#e6f8ec;color:#16813a}.status.Warning{background:#fff4d9;color:#9a6500}.status.Critical{background:#ffe8e8;color:#bd3030}.details{border:0;border-radius:9px;background:#eaf3ff;color:#2461a8;font-weight:800;padding:8px 10px;cursor:pointer}.explanation{display:none;padding:10px 13px!important;background:#f4f9ff!important;color:#46617b}.explanation.show{display:table-cell}.empty{text-align:center;padding:60px;color:var(--muted)}
+.rules{display:flex;gap:8px;flex-wrap:wrap;margin-top:17px}.rule{padding:7px 10px;border:1px solid #d8e6f3;background:#fff;border-radius:999px;color:#46617b;font-size:11px;font-weight:800}
+.live{display:inline-flex;align-items:center;gap:7px;margin-top:8px;color:#52708c;font-size:12px}.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 4px #22c55e20}.refresh{border:1px solid #bcd3e8;background:#fff;color:#24577f;border-radius:9px;padding:6px 9px;font-weight:800;cursor:pointer}.refresh:disabled{opacity:.55}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.side{position:relative}.side-foot{margin-top:20px}.heading{align-items:start;flex-direction:column}.kpis{grid-template-columns:1fr 1fr}.main{padding:18px}}
+@media(max-width:520px){.kpis{grid-template-columns:1fr}.recommend{align-items:start;flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="side">
+    <div class="brand"><div class="logo"></div><div><b>Pharma AI Copilot</b><small>Predictive Intelligence</small></div></div>
+    <nav class="nav">
+      <a class="active" href="{{ url_for('predictive_dashboard') }}">Vista ejecutiva</a>
+      <a href="#machines">Activos y diagnóstico</a>
+      <a href="{{ url_for('sop_assistant') }}">Copiloto SOP</a>
+      <a href="{{ url_for('index') }}">Dashboard principal</a>
+    </nav>
+    <div class="side-foot">
+      <div class="user"><b>{{ current_user.name }}</b><br><small>@{{ current_user.username }}</small></div>
+      <form method="post" action="{{ url_for('logout') }}">{{ logout_form.hidden_tag() }}<button class="logout" type="submit">Cerrar sesión</button></form>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="heading">
+      <div><div class="eyebrow">Resumen predictivo</div><h1>Salud de equipos de producción</h1><p>Monitoreo multivariable de <span id="machineTotal">{{ rows|length }}</span> máquinas farmacéuticas.</p><div class="live"><span class="live-dot"></span><span id="lastUpdate">Esperando actualización</span><button class="refresh" id="refreshButton" type="button">Actualizar</button></div></div>
+      <div class="model-note">Modelo demostrativo basado en umbrales ponderados. Sus resultados requieren validación antes de apoyar decisiones reales de mantenimiento.</div>
+    </div>
+    <div class="rules"><span class="rule">Vibración 25%</span><span class="rule">Temperatura 20%</span><span class="rule">Corriente 17%</span><span class="rule">RPM 14%</span><span class="rule">Uso 12%</span><span class="rule">Presión 12%</span></div>
+    <section class="kpis">
+      <article class="kpi healthy"><small>Máquinas saludables</small><strong id="healthyCount">{{ counts.Healthy }}</strong><span>Operación estable</span></article>
+      <article class="kpi warning"><small>Máquinas en alerta</small><strong id="warningCount">{{ counts.Warning }}</strong><span>Requieren seguimiento</span></article>
+      <article class="kpi critical"><small>Máquinas críticas</small><strong id="criticalCount">{{ counts.Critical }}</strong><span>Acción prioritaria</span></article>
+      <article class="kpi"><small>Riesgo promedio</small><strong id="averageRisk">{{ '%.1f'|format(average_risk) }}%</strong><span>Exposición calculada</span></article>
+    </section>
+    {% if highest %}
+    <section class="recommend" id="recommendation"><div><small>DECISIÓN RECOMENDADA</small><b id="recommendationTitle" style="display:block;margin-top:7px">{{ highest[0].code }} · {{ highest[0].name }} concentra el mayor riesgo ({{ '%.1f'|format(highest[1].failure_probability) }}%).</b><p id="recommendationText">{{ highest[1].explanation }} Validar sensores, condición operacional y plan de mantenimiento.</p></div><span id="recommendationStatus" class="status {{ highest[1].health_status }}">{{ highest[1].health_status }}</span></section>
+    {% endif %}
+    <section class="panel" id="machines">
+      <div class="panel-head"><div><div class="eyebrow">Control de activos</div><h2>Diagnóstico por máquina</h2></div><div class="filters"><button class="filter active" data-filter="All">Todas</button><button class="filter" data-filter="Healthy">Healthy</button><button class="filter" data-filter="Warning">Warning</button><button class="filter" data-filter="Critical">Critical</button></div></div>
+      {% if rows %}<div class="table-wrap"><table><thead><tr><th>Máquina</th><th>Uso</th><th>Vibración</th><th>Temperatura</th><th>Corriente</th><th>RPM</th><th>Presión</th><th>Riesgo</th><th>Estado</th><th>Diagnóstico</th></tr></thead><tbody id="machineTableBody">
+      {% for machine, reading in rows %}
+        <tr class="machine-row" data-status="{{ reading.health_status }}"><td class="machine"><b>{{ machine.code }}</b><small>{{ machine.name }} · {{ machine.area }}</small></td><td>{{ '%.0f'|format(reading.usage_hours) }} h</td><td>{{ '%.2f'|format(reading.vibration) }} mm/s</td><td>{{ '%.1f'|format(reading.temperature) }} °C</td><td>{{ '%.1f'|format(reading.current) }} A</td><td>{{ '%.0f'|format(reading.rpm) }}</td><td>{{ '%.2f'|format(reading.pressure) }} bar</td><td class="risk"><div class="track"><div class="fill" style="width:{{ reading.failure_probability }}%"></div></div><b>{{ '%.1f'|format(reading.failure_probability) }}%</b></td><td><span class="status {{ reading.health_status }}">{{ reading.health_status }}</span></td><td><button class="details" type="button">Ver factores</button></td></tr>
+        <tr class="machine-detail" data-status="{{ reading.health_status }}"><td class="explanation" colspan="10"><b>{{ machine.code }}:</b> {{ reading.explanation }} Límites configurados: vibración {{ machine.max_vibration }} mm/s, temperatura {{ machine.max_temperature }} °C, corriente {{ machine.rated_current }} A y presión {{ machine.max_pressure }} bar.</td></tr>
+      {% endfor %}
+      </tbody></table></div>{% else %}<div class="empty">No hay lecturas. Ejecuta <code>flask --app app seed-predictive-data</code>.</div>{% endif %}
+    </section>
+  </main>
+</div>
+<script>
+const snapshotUrl={{ url_for('predictive_snapshot_api')|tojson }};
+const tableBody=document.getElementById('machineTableBody');
+const refreshButton=document.getElementById('refreshButton');
+let activeFilter='All';
+let refreshing=false;
+
+function escapeHtml(value){const node=document.createElement('div');node.textContent=String(value??'');return node.innerHTML;}
+function number(value,decimals=1){return Number(value).toFixed(decimals);}
+function applyFilter(){document.querySelectorAll('tr[data-status]').forEach(row=>row.style.display=activeFilter==='All'||row.dataset.status===activeFilter?'':'none');}
+function machineRows(machines){
+  return machines.map(item=>`<tr class="machine-row" data-status="${escapeHtml(item.health_status)}"><td class="machine"><b>${escapeHtml(item.code)}</b><small>${escapeHtml(item.name)} · ${escapeHtml(item.area)}</small></td><td>${number(item.usage_hours,0)} h</td><td>${number(item.vibration,2)} mm/s</td><td>${number(item.temperature)} °C</td><td>${number(item.current)} A</td><td>${number(item.rpm,0)}</td><td>${number(item.pressure,2)} bar</td><td class="risk"><div class="track"><div class="fill" style="width:${number(item.failure_probability)}%"></div></div><b>${number(item.failure_probability)}%</b></td><td><span class="status ${escapeHtml(item.health_status)}">${escapeHtml(item.health_status)}</span></td><td><button class="details" type="button">Ver factores</button></td></tr><tr class="machine-detail" data-status="${escapeHtml(item.health_status)}"><td class="explanation" colspan="10"><b>${escapeHtml(item.code)}:</b> ${escapeHtml(item.explanation)} Límites configurados: vibración ${number(item.limits.vibration,2)} mm/s, temperatura ${number(item.limits.temperature)} °C, corriente ${number(item.limits.current)} A y presión ${number(item.limits.pressure,2)} bar.</td></tr>`).join('');
+}
+function renderSnapshot(data){
+  document.getElementById('machineTotal').textContent=data.summary.total;
+  document.getElementById('healthyCount').textContent=data.summary.Healthy;
+  document.getElementById('warningCount').textContent=data.summary.Warning;
+  document.getElementById('criticalCount').textContent=data.summary.Critical;
+  document.getElementById('averageRisk').textContent=number(data.summary.average_risk)+'%';
+  if(tableBody){tableBody.innerHTML=machineRows(data.machines);applyFilter();}
+  const highest=data.machines[0];
+  if(highest){
+    document.getElementById('recommendationTitle').textContent=`${highest.code} · ${highest.name} concentra el mayor riesgo (${number(highest.failure_probability)}%).`;
+    document.getElementById('recommendationText').textContent=`${highest.explanation} Validar sensores, condición operacional y plan de mantenimiento.`;
+    const status=document.getElementById('recommendationStatus');status.className=`status ${highest.health_status}`;status.textContent=highest.health_status;
+  }
+  const stamp=data.updated_at?new Date(data.updated_at):new Date();
+  document.getElementById('lastUpdate').textContent='Última lectura: '+new Intl.DateTimeFormat('es-CO',{dateStyle:'short',timeStyle:'medium',timeZone:'America/Bogota'}).format(stamp);
+}
+async function refreshSnapshot(){
+  if(refreshing)return;refreshing=true;refreshButton.disabled=true;refreshButton.textContent='Actualizando…';
+  try{const response=await fetch(snapshotUrl,{headers:{Accept:'application/json'},cache:'no-store'});if(!response.ok)throw new Error('No se pudo actualizar la analítica.');renderSnapshot(await response.json());}
+  catch(error){document.getElementById('lastUpdate').textContent=error.message;}
+  finally{refreshing=false;refreshButton.disabled=false;refreshButton.textContent='Actualizar';}
+}
+document.querySelectorAll('.filter').forEach(button=>button.addEventListener('click',()=>{document.querySelectorAll('.filter').forEach(x=>x.classList.remove('active'));button.classList.add('active');activeFilter=button.dataset.filter;applyFilter();}));
+tableBody?.addEventListener('click',event=>{const button=event.target.closest('.details');if(!button)return;const cell=button.closest('tr').nextElementSibling.querySelector('.explanation');cell.classList.toggle('show');button.textContent=cell.classList.contains('show')?'Ocultar':'Ver factores';});
+refreshButton.addEventListener('click',refreshSnapshot);
+refreshSnapshot();
+setInterval(refreshSnapshot,15000);
+</script>
+</body>
+</html>

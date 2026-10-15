@@ -1,9 +1,11 @@
 import unittest
+from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 from app import create_app
 from extensions import db
-from models import User
+from models import Machine, MachineReading, User
+from predictive_service import append_simulated_snapshot, seed_demo_machines
 
 
 class AuthFlowTestCase(unittest.TestCase):
@@ -57,6 +59,7 @@ class AuthFlowTestCase(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn("Ana Gómez", response.get_data(as_text=True))
+        self.assertIn("Analítica predictiva", response.get_data(as_text=True))
 
         response = self.client.post("/logout", follow_redirects=True)
         self.assertIn("Sesión cerrada", response.get_data(as_text=True))
@@ -118,6 +121,56 @@ class AuthFlowTestCase(unittest.TestCase):
         )
         self.assertIn("Si el correo está registrado", response.get_data(as_text=True))
         send_email.assert_not_called()
+
+    @patch("app.answer_question", return_value=("Detenga el equipo según el SOP.", ["manual.pdf · página 4"]))
+    def test_authenticated_sop_chat(self, answer_question):
+        user = User(name="Operador", email="op@example.com", username="operador")
+        user.set_password("ClaveSegura123")
+        db.session.add(user)
+        db.session.commit()
+        self.client.post("/login", data={"identity": "operador", "password": "ClaveSegura123"})
+
+        response = self.client.post(
+            "/api/sop/chat",
+            json={"question": "¿Qué indica el procedimiento?", "mode": "sop"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json["sources"], ["manual.pdf · página 4"])
+        answer_question.assert_called_once()
+
+    def test_sop_chat_requires_login(self):
+        response = self.client.post("/api/sop/chat", json={"question": "Pregunta válida", "mode": "sop"})
+        self.assertEqual(response.status_code, 302)
+
+    def test_predictive_dashboard_requires_login(self):
+        response = self.client.get("/predictive")
+        self.assertEqual(response.status_code, 302)
+
+    def test_predictive_dashboard_with_seed_data(self):
+        user = User(name="Técnico", email="tech@example.com", username="tecnico")
+        user.set_password("ClaveSegura123")
+        db.session.add(user)
+        db.session.commit()
+        seed_demo_machines()
+        self.client.post("/login", data={"identity": "tecnico", "password": "ClaveSegura123"})
+
+        response = self.client.get("/predictive")
+        body = response.get_data(as_text=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Salud de equipos de producción", body)
+        self.assertEqual(db.session.scalar(db.select(db.func.count(Machine.id))), 20)
+        self.assertEqual(db.session.scalar(db.select(db.func.count(MachineReading.id))), 20)
+
+        snapshot = self.client.get("/api/predictive/snapshot")
+        self.assertEqual(snapshot.status_code, 200)
+        self.assertEqual(snapshot.json["summary"]["total"], 20)
+        self.assertEqual(len(snapshot.json["machines"]), 20)
+        self.assertIn("failure_probability", snapshot.json["machines"][0])
+
+        append_simulated_snapshot(
+            recorded_at=datetime.now(timezone.utc) + timedelta(minutes=15), seed=99
+        )
+        self.assertEqual(db.session.scalar(db.select(db.func.count(MachineReading.id))), 40)
 
 
 if __name__ == "__main__":

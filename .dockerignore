@@ -13,3 +13,5 @@ htmlcov
 instance
 tests
 *.md
+!datos_simulados/
+!datos_simulados/*.md

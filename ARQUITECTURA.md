@@ -9,3 +9,5 @@
 - Flask-WTF para validación de formularios y protección CSRF.
 - Contraseñas almacenadas exclusivamente como hashes seguros de Werkzeug.
 - Flask-Migrate/Alembic para versionar y aplicar cambios del esquema PostgreSQL.
+- PostgreSQL/pgvector para almacenar y consultar embeddings de SOP y manuales.
+- Ollama con `nomic-embed-text` para embeddings y `llama3.1:8b` para respuestas RAG.

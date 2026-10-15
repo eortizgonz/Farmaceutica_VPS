@@ -115,3 +115,137 @@ APP_BASE_URL=http://IP_DEL_VPS:8010
 ```
 
 No utilice la contraseña normal de Gmail y no agregue `.env` al repositorio.
+
+## Asistente SOP con Ollama y pgvector
+
+Los usuarios autenticados pueden cargar documentos PDF, TXT o Markdown desde
+`/sop` y realizar consultas documentales o troubleshooting guiado. PostgreSQL
+con la extensión pgvector persiste los fragmentos y embeddings; Ollama genera
+los vectores y las respuestas localmente.
+
+El dashboard también incluye un chat flotante que consume el mismo flujo RAG
+mediante el endpoint autenticado `POST /api/sop/chat`, con respuesta y fuentes.
+
+La estructura, consultas SQL, acceso desde el VPS/DBeaver, eliminación controlada
+y respaldos están documentados en [GUIA_PGVECTOR.md](GUIA_PGVECTOR.md).
+
+Modelos requeridos:
+
+```bash
+ollama pull llama3.1:8b
+ollama pull nomic-embed-text
+```
+
+En local se usa `http://127.0.0.1:11434`. En Docker, Compose conecta con el
+Ollama del VPS mediante `http://host.docker.internal:11434`. Los vectores se
+conservan junto con PostgreSQL en el volumen `postgres_data`.
+
+El directorio `datos_simulados` incluye once documentos ficticios para probar
+manuales de equipos, calidad, liberación de lotes y troubleshooting. Se cargan
+en bloque con:
+
+```bash
+flask --app app ingest-documents datos_simulados
+```
+
+Dentro del contenedor del VPS use:
+
+```bash
+docker compose exec app python -m flask --app app ingest-documents datos_simulados
+```
+
+Estos documentos son únicamente datos de demostración y no sustituyen SOP
+aprobados, instrucciones del fabricante ni decisiones de Calidad/EHS.
+
+## Analítica predictiva de equipos
+
+La ruta autenticada `/predictive` muestra 20 equipos, sus últimas lecturas y un
+índice demostrativo de probabilidad de falla. El cálculo compara horas de uso,
+vibración, temperatura, corriente, RPM y presión con los límites configurados
+para cada máquina. Los estados son `Healthy` (menos de 40%), `Warning` (40% a
+menos de 70%) y `Critical` (70% o más).
+
+Después de aplicar las migraciones, cargue o restablezca los datos simulados:
+
+```bash
+flask --app app db upgrade
+flask --app app seed-predictive-data
+```
+
+En Docker:
+
+```bash
+docker compose exec app python -m flask --app app seed-predictive-data
+```
+
+El índice es explicable y útil para demostración, pero no constituye un modelo
+validado. Para uso real debe entrenarse y validarse con historial confiable de
+lecturas, mantenimiento y fallas confirmadas.
+
+### Construcción del historial de lecturas
+
+El catálogo puede ejecutarse nuevamente sin eliminar el historial existente:
+
+```bash
+flask --app app seed-predictive-data
+```
+
+Para crear 90 días de historia con una lectura por hora:
+
+```bash
+flask --app app backfill-predictive-history --days 90 --interval-minutes 60
+```
+
+La carga retrospectiva solo completa el periodo anterior a la primera lectura,
+por lo que repetir el comando no duplica el mismo intervalo. Para agregar una
+nueva captura de las 20 máquinas:
+
+```bash
+flask --app app capture-machine-readings
+```
+
+Para observar cambios continuos en local, mantenga una segunda terminal abierta
+con el recolector. El valor predeterminado es 15 segundos:
+
+```bash
+flask --app app run-reading-collector --interval-seconds 15
+```
+
+En Docker, el servicio `collector` ejecuta esta tarea automáticamente. El
+intervalo se configura en `.env`; por defecto son 15 minutos:
+
+```text
+PREDICTIVE_CAPTURE_INTERVAL=900
+```
+
+Como alternativa puede utilizar `cron` (no active ambos mecanismos):
+
+```cron
+*/15 * * * * cd /ruta/Farmaceutica_VPS && /usr/bin/docker compose exec -T app python -m flask --app app capture-machine-readings >> /tmp/pharma-readings.log 2>&1
+```
+
+Se recomienda programar el comando externamente y no dentro de Flask/Gunicorn,
+ya que varios workers podrían insertar capturas duplicadas. Los datos generados
+son sintéticos; para entrenar un modelo supervisado también deben registrarse
+fallas reales confirmadas y mantenimientos, no solo señales de sensores.
+
+### Reglas del índice de riesgo
+
+El índice combina vibración (25%), temperatura (20%), corriente (17%),
+desviación de RPM (14%), horas de uso (12%) y presión (12%). Para cada variable,
+el consumo del límite se transforma a una severidad: hasta 60% no aporta riesgo;
+de 60% a 80% aporta hasta 25 puntos; de 80% a 100% aporta entre 25 y 70; y de
+100% a 115% aporta entre 70 y 100. Un valor sobre 115% fuerza al menos 75% de
+riesgo, dos límites excedidos fuerzan al menos 70% y uno fuerza al menos 45%.
+
+Cuando se cambien estas reglas, todo el historial se actualiza sin regenerarlo:
+
+```bash
+flask --app app recalculate-machine-risks
+```
+
+La pantalla `/predictive` consulta el endpoint autenticado
+`GET /api/predictive/snapshot` cada 15 segundos. Al aparecer nuevas lecturas,
+actualiza sin recargar la página los conteos por estado, riesgo promedio, activo
+prioritario, variables, porcentajes y explicaciones. El botón `Actualizar`
+permite solicitar una lectura inmediata de la base de datos.
