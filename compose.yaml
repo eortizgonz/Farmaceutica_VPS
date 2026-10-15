@@ -55,6 +55,8 @@ services:
     image: ${APP_IMAGE:-farmaceutica-copilot:local}
     restart: unless-stopped
     entrypoint: []
+    healthcheck:
+      disable: true
     command:
       - python
       - -m
