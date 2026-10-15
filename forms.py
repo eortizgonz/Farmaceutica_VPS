@@ -68,6 +68,11 @@ class SOPUploadForm(FlaskForm):
 
 
 class SOPQuestionForm(FlaskForm):
-    mode = SelectField("Modo", choices=[("sop", "Consulta SOP"), ("troubleshooting", "Troubleshooting guiado")])
+    mode = SelectField("Modo", choices=[
+        ("auto", "Automático"),
+        ("sop", "Consulta SOP"),
+        ("troubleshooting", "Troubleshooting guiado"),
+        ("predictive", "Analítica predictiva"),
+    ])
     question = TextAreaField("Pregunta", validators=[DataRequired(), Length(min=5, max=2000)])
     submit = SubmitField("Consultar con IA")

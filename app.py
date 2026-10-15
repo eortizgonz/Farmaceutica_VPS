@@ -30,9 +30,28 @@ from predictive_service import (
     recalculate_historical_risks,
     seed_demo_machines,
 )
+from predictive_chat import answer_predictive_question
 
 
 load_dotenv()
+
+
+def resolve_chat_mode(question, requested_mode):
+    if requested_mode != "auto":
+        return requested_mode
+    normalized = question.casefold()
+    predictive_terms = (
+        "riesgo", "predictiv", "healthy", "warning", "critical", "crítica",
+        "critica", "máquina debo revisar", "maquina debo revisar", "mayor riesgo",
+        "estado de la máquina", "estado de la maquina", "vibración", "vibracion",
+        "temperatura", "corriente", "rpm", "presión", "presion",
+    )
+    if any(term in normalized for term in predictive_terms):
+        return "predictive"
+    troubleshooting_terms = ("alarma", "error", "falla", "detenida", "se detuvo", "no arranca")
+    if any(term in normalized for term in troubleshooting_terms):
+        return "troubleshooting"
+    return "sop"
 
 
 def get_database_url():
@@ -102,6 +121,7 @@ def create_app(test_config=None):
         return render_template(
             "predictive.html", rows=rows, counts=counts, average_risk=average_risk,
             highest=rows[0] if rows else None, logout_form=EmptyForm(),
+            embedded=request.args.get("embedded") == "1",
         )
 
     @app.get("/api/predictive/snapshot")
@@ -161,7 +181,11 @@ def create_app(test_config=None):
                 flash(str(error), "error")
         elif question_form.submit.data and question_form.validate_on_submit():
             try:
-                answer, sources = answer_question(question_form.question.data, question_form.mode.data)
+                mode = resolve_chat_mode(question_form.question.data, question_form.mode.data)
+                if mode == "predictive":
+                    answer, sources = answer_predictive_question(question_form.question.data)
+                else:
+                    answer, sources = answer_question(question_form.question.data, mode)
             except Exception as error:
                 app.logger.exception("Error consultando SOP")
                 flash(str(error), "error")
@@ -172,13 +196,17 @@ def create_app(test_config=None):
     def sop_chat_api():
         payload = request.get_json(silent=True) or {}
         question = str(payload.get("question", "")).strip()
-        mode = payload.get("mode", "sop")
+        mode = payload.get("mode", "auto")
         if len(question) < 5 or len(question) > 2000:
             return jsonify(error="La pregunta debe tener entre 5 y 2000 caracteres."), 400
-        if mode not in {"sop", "troubleshooting"}:
+        if mode not in {"auto", "sop", "troubleshooting", "predictive"}:
             return jsonify(error="Modo de consulta inválido."), 400
         try:
-            answer, sources = answer_question(question, mode)
+            mode = resolve_chat_mode(question, mode)
+            if mode == "predictive":
+                answer, sources = answer_predictive_question(question)
+            else:
+                answer, sources = answer_question(question, mode)
             return jsonify(answer=answer, sources=sources)
         except ValueError as error:
             return jsonify(error=str(error)), 400

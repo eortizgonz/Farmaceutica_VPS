@@ -2,7 +2,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
-from app import create_app
+from app import create_app, resolve_chat_mode
 from extensions import db
 from models import Machine, MachineReading, User
 from predictive_service import append_simulated_snapshot, seed_demo_machines
@@ -60,6 +60,7 @@ class AuthFlowTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Ana Gómez", response.get_data(as_text=True))
         self.assertIn("Analítica predictiva", response.get_data(as_text=True))
+        self.assertIn('id="predictiveEmbedded"', response.get_data(as_text=True))
 
         response = self.client.post("/logout", follow_redirects=True)
         self.assertIn("Sesión cerrada", response.get_data(as_text=True))
@@ -138,9 +139,33 @@ class AuthFlowTestCase(unittest.TestCase):
         self.assertEqual(response.json["sources"], ["manual.pdf · página 4"])
         answer_question.assert_called_once()
 
+    @patch(
+        "app.answer_predictive_question",
+        return_value=("La CT-900 está en Warning con 43.3%.", ["PostgreSQL · machine_readings"]),
+    )
+    def test_authenticated_predictive_chat(self, predictive_answer):
+        user = User(name="Operador", email="predict@example.com", username="predictivo")
+        user.set_password("ClaveSegura123")
+        db.session.add(user)
+        db.session.commit()
+        self.client.post("/login", data={"identity": "predictivo", "password": "ClaveSegura123"})
+
+        response = self.client.post(
+            "/api/sop/chat",
+            json={"question": "¿Cuál es el riesgo actual de la CT-900?", "mode": "predictive"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("43.3%", response.json["answer"])
+        predictive_answer.assert_called_once_with("¿Cuál es el riesgo actual de la CT-900?")
+
     def test_sop_chat_requires_login(self):
         response = self.client.post("/api/sop/chat", json={"question": "Pregunta válida", "mode": "sop"})
         self.assertEqual(response.status_code, 302)
+
+    def test_automatic_chat_mode_routing(self):
+        self.assertEqual(resolve_chat_mode("¿Qué máquina debo revisar primero?", "auto"), "predictive")
+        self.assertEqual(resolve_chat_mode("¿Qué hago ante la alarma E-104?", "auto"), "troubleshooting")
+        self.assertEqual(resolve_chat_mode("¿Cómo se libera un lote?", "auto"), "sop")
 
     def test_predictive_dashboard_requires_login(self):
         response = self.client.get("/predictive")
@@ -160,6 +185,10 @@ class AuthFlowTestCase(unittest.TestCase):
         self.assertIn("Salud de equipos de producción", body)
         self.assertEqual(db.session.scalar(db.select(db.func.count(Machine.id))), 20)
         self.assertEqual(db.session.scalar(db.select(db.func.count(MachineReading.id))), 20)
+
+        embedded = self.client.get("/predictive?embedded=1")
+        self.assertEqual(embedded.status_code, 200)
+        self.assertIn('<body class="embedded">', embedded.get_data(as_text=True))
 
         snapshot = self.client.get("/api/predictive/snapshot")
         self.assertEqual(snapshot.status_code, 200)

@@ -249,3 +249,12 @@ La pantalla `/predictive` consulta el endpoint autenticado
 actualiza sin recargar la página los conteos por estado, riesgo promedio, activo
 prioritario, variables, porcentajes y explicaciones. El botón `Actualizar`
 permite solicitar una lectura inmediata de la base de datos.
+
+### Chat de analítica predictiva
+
+El chat incluye el modo `Analítica predictiva`. Este modo no permite que el
+modelo genere SQL: la aplicación ejecuta consultas controladas sobre `machines`
+y `machine_readings` y entrega a Ollama el resumen actual, los cinco equipos de
+mayor riesgo, reglas del índice y tendencias de 24 horas para las máquinas
+mencionadas. Las respuestas identifican PostgreSQL y la fecha de lectura como
+fuente, y distinguen el índice demostrativo de una probabilidad validada.
