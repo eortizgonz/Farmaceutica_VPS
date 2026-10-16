@@ -21,8 +21,9 @@ from forms import (
     SOPUploadForm,
 )
 from mail_service import send_password_reset_email
-from models import User
+from models import Machine, MachineReading, User
 from rag_service import answer_question, ingest_document
+from machine_manual_service import ingest_machine_manuals, machine_diagnosis
 from predictive_service import (
     append_simulated_snapshot,
     backfill_simulated_history,
@@ -158,6 +159,40 @@ def create_app(test_config=None):
             machines=machines,
             summary={**counts, "average_risk": average, "total": len(machines)},
             updated_at=max((item["recorded_at"] for item in machines), default=None),
+        )
+
+    @app.get("/api/predictive/machines/<string:code>/diagnosis")
+    @login_required
+    def predictive_machine_diagnosis_api(code):
+        machine = db.session.scalar(db.select(Machine).where(Machine.code == code))
+        if not machine:
+            return jsonify(error="Máquina no encontrada."), 404
+        reading = db.session.scalar(
+            db.select(MachineReading)
+            .where(MachineReading.machine_id == machine.id)
+            .order_by(MachineReading.recorded_at.desc()).limit(1)
+        )
+        if not reading:
+            return jsonify(error="La máquina no tiene lecturas disponibles."), 404
+        try:
+            manual = machine_diagnosis(machine, reading)
+        except ValueError as error:
+            return jsonify(error=str(error)), 404
+        return jsonify(
+            machine={"code": machine.code, "name": machine.name, "area": machine.area},
+            reading={
+                "failure_probability": reading.failure_probability,
+                "health_status": reading.health_status,
+                "explanation": reading.explanation,
+                "usage_hours": reading.usage_hours,
+                "vibration": reading.vibration,
+                "temperature": reading.temperature,
+                "current": reading.current,
+                "rpm": reading.rpm,
+                "pressure": reading.pressure,
+                "recorded_at": reading.recorded_at.isoformat(),
+            },
+            manual=manual,
         )
 
     @app.get("/health")
@@ -354,6 +389,15 @@ def create_app(test_config=None):
         """Crea o actualiza las 20 máquinas sin borrar su historial."""
         count = seed_demo_machines()
         click.echo(f"Datos predictivos cargados: {count} máquinas.")
+
+    @app.cli.command("ingest-machine-manuals")
+    def ingest_machine_manuals_command():
+        """Genera e indexa en pgvector un manual predictivo por máquina."""
+        try:
+            machines, chunks = ingest_machine_manuals()
+        except ValueError as error:
+            raise click.ClickException(str(error)) from error
+        click.echo(f"Manuales indexados: {machines} máquinas, {chunks} fragmentos.")
 
     @app.cli.command("capture-machine-readings")
     @click.option("--seed", type=int, default=None, help="Semilla opcional para reproducibilidad.")

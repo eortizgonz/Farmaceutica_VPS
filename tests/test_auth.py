@@ -195,11 +195,34 @@ class AuthFlowTestCase(unittest.TestCase):
         self.assertEqual(snapshot.json["summary"]["total"], 20)
         self.assertEqual(len(snapshot.json["machines"]), 20)
         self.assertIn("failure_probability", snapshot.json["machines"][0])
+        self.assertIn('id="diagnosisModal"', body)
 
         append_simulated_snapshot(
             recorded_at=datetime.now(timezone.utc) + timedelta(minutes=15), seed=99
         )
         self.assertEqual(db.session.scalar(db.select(db.func.count(MachineReading.id))), 40)
+
+    @patch("app.machine_diagnosis")
+    def test_machine_diagnosis_endpoint(self, diagnosis):
+        user = User(name="Técnico", email="manual@example.com", username="manual")
+        user.set_password("ClaveSegura123")
+        db.session.add(user)
+        db.session.commit()
+        seed_demo_machines()
+        diagnosis.return_value = {
+            "diagnosis": "Revisar tren mecánico.",
+            "causes": ["Desalineación"],
+            "actions": ["Inspeccionar rodamientos"],
+            "factors": [{"name": "Vibración", "contribution": 12.5, "ratio": 95.0}],
+            "source": "MAN-EQP-MX-750_mantenimiento_predictivo.md · pgvector",
+        }
+        self.client.post("/login", data={"identity": "manual", "password": "ClaveSegura123"})
+
+        response = self.client.get("/api/predictive/machines/MX-750/diagnosis")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json["machine"]["code"], "MX-750")
+        self.assertIn("pgvector", response.json["manual"]["source"])
 
 
 if __name__ == "__main__":

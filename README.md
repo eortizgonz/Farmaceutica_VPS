@@ -258,3 +258,25 @@ y `machine_readings` y entrega a Ollama el resumen actual, los cinco equipos de
 mayor riesgo, reglas del índice y tendencias de 24 horas para las máquinas
 mencionadas. Las respuestas identifican PostgreSQL y la fecha de lectura como
 fuente, y distinguen el índice demostrativo de una probabilidad validada.
+
+### Manuales predictivos por máquina
+
+La aplicación genera e indexa en `sop_chunks` un manual específico para cada
+una de las 20 máquinas. Cada manual incluye rangos, causas, diagnóstico y
+acciones para Healthy, Warning y Critical. Requiere `nomic-embed-text` en
+Ollama.
+
+```bash
+flask --app app seed-predictive-data
+flask --app app ingest-machine-manuals
+```
+
+En Docker/VPS:
+
+```bash
+docker compose exec app python -m flask --app app ingest-machine-manuals
+```
+
+El comando reemplaza de forma segura la versión anterior de cada manual. El
+botón **Ver factores** muestra los aportes al índice y la información del
+manual almacenado en pgvector.
