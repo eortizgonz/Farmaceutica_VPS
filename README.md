@@ -266,6 +266,10 @@ una de las 20 máquinas. Cada manual incluye rangos, causas, diagnóstico y
 acciones para Healthy, Warning y Critical. Requiere `nomic-embed-text` en
 Ollama.
 
+Los archivos fuente están versionados en
+`datos_simulados/manuales_maquinas/`; pueden revisarse o modificarse antes de
+volver a ejecutar la indexación.
+
 ```bash
 flask --app app seed-predictive-data
 flask --app app ingest-machine-manuals

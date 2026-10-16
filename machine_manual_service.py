@@ -1,4 +1,5 @@
 from io import BytesIO
+from pathlib import Path
 
 from werkzeug.datastructures import FileStorage
 
@@ -18,6 +19,8 @@ MANUAL_PROFILES = {
     "default": (["Desgaste mecánico progresivo", "Carga operativa fuera del rango normal", "Sensor descalibrado o condición eléctrica anormal"], "Las variables con mayor aporte deben verificarse contra el estado real y el historial de mantenimiento.", ["Confirmar la lectura con un instrumento verificado", "Revisar carga, conexiones, lubricación y elementos móviles", "Comparar con mantenimiento preventivo y eventos recientes"]),
 }
 
+MANUALS_FOLDER = Path(__file__).resolve().parent / "datos_simulados" / "manuales_maquinas"
+
 
 def _profile(machine):
     searchable = f"{machine.machine_type} {machine.name}".casefold()
@@ -32,14 +35,10 @@ def manual_filename(machine):
 
 
 def manual_text(machine):
-    causes, diagnosis, actions = _profile(machine)
-    return f"""# Manual de diagnóstico predictivo · {machine.code}
-Equipo: {machine.name}. Área: {machine.area}. Tipo: {machine.machine_type}.
-Rangos: vibración {machine.max_vibration} mm/s; temperatura {machine.max_temperature} °C; corriente {machine.rated_current} A; velocidad {machine.nominal_rpm} RPM; presión {machine.max_pressure} bar; servicio {machine.max_usage_hours} h.
-Healthy 1–39.9%: condición estable. Continuar monitoreo y mantenimiento preventivo.
-Warning 40–69.9%: {diagnosis} Causas: {'; '.join(causes)}. Acciones: {'; '.join(actions)}; programar inspección prioritaria.
-Critical 70–99%: alta exposición. Informar a Operaciones y Mantenimiento; aplicar parada segura y LOTO cuando lo determine el procedimiento; {'; '.join(actions)}; no anular alarmas ni protecciones.
-Nota: índice demostrativo, no probabilidad validada. Toda intervención requiere personal autorizado."""
+    path = MANUALS_FOLDER / manual_filename(machine)
+    if not path.is_file():
+        raise ValueError(f"No existe el archivo físico del manual: {path.name}")
+    return path.read_text(encoding="utf-8")
 
 
 def ingest_machine_manuals():
