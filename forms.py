@@ -73,6 +73,7 @@ class SOPQuestionForm(FlaskForm):
         ("sop", "Consulta SOP"),
         ("troubleshooting", "Troubleshooting guiado"),
         ("predictive", "Analítica predictiva"),
+        ("oee", "Eficiencia OEE"),
     ])
     question = TextAreaField("Pregunta", validators=[DataRequired(), Length(min=5, max=2000)])
     submit = SubmitField("Consultar con IA")

@@ -1,10 +1,12 @@
 import unittest
+import time
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 from app import create_app, resolve_chat_mode
 from extensions import db
-from models import Machine, MachineReading, User
+from models import Machine, MachineReading, OEEResult, Product, ProductionRun, User, WorkShift
+from oee_service import seed_oee_demo
 from predictive_service import append_simulated_snapshot, seed_demo_machines
 
 
@@ -32,6 +34,21 @@ class AuthFlowTestCase(unittest.TestCase):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 302)
         self.assertIn("/login", response.headers["Location"])
+
+    def test_session_expires_after_idle_timeout(self):
+        self.app.config["SESSION_IDLE_TIMEOUT_SECONDS"] = 1
+        user = User(name="Inactivo", email="idle@example.com", username="idle")
+        user.set_password("ClaveSegura123")
+        db.session.add(user)
+        db.session.commit()
+        self.client.post("/login", data={"identity": "idle", "password": "ClaveSegura123"})
+        with self.client.session_transaction() as browser_session:
+            browser_session["last_user_activity"] = int(time.time()) - 2
+
+        response = self.client.get("/api/predictive/snapshot")
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn("inactividad", response.json["error"])
 
     def test_register_login_and_logout(self):
         response = self.client.post(
@@ -166,6 +183,19 @@ class AuthFlowTestCase(unittest.TestCase):
         self.assertEqual(resolve_chat_mode("¿Qué máquina debo revisar primero?", "auto"), "predictive")
         self.assertEqual(resolve_chat_mode("¿Qué hago ante la alarma E-104?", "auto"), "troubleshooting")
         self.assertEqual(resolve_chat_mode("¿Cómo se libera un lote?", "auto"), "sop")
+        self.assertEqual(resolve_chat_mode("¿Cuál es el OEE del turno actual?", "auto"), "oee")
+
+    @patch("app.answer_oee_question", return_value=("El turno actual es T1.", ["PostgreSQL · turnos"]))
+    def test_authenticated_oee_chat(self, answer_oee):
+        user = User(name="Operador", email="oeechat@example.com", username="oeechat")
+        user.set_password("ClaveSegura123")
+        db.session.add(user)
+        db.session.commit()
+        self.client.post("/login", data={"identity": "oeechat", "password": "ClaveSegura123"})
+        response = self.client.post("/api/sop/chat", json={"question": "¿Cuál es el OEE del turno actual?", "mode": "auto"})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("T1", response.json["answer"])
+        answer_oee.assert_called_once()
 
     def test_predictive_dashboard_requires_login(self):
         response = self.client.get("/predictive")
@@ -223,6 +253,27 @@ class AuthFlowTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json["machine"]["code"], "MX-750")
         self.assertIn("pgvector", response.json["manual"]["source"])
+
+    def test_oee_dashboard_and_relational_seed(self):
+        user = User(name="OEE", email="oee@example.com", username="oee")
+        user.set_password("ClaveSegura123")
+        db.session.add(user)
+        db.session.commit()
+        result = seed_oee_demo(days=1, seed=99)
+        self.client.post("/login", data={"identity": "oee", "password": "ClaveSegura123"})
+
+        page = self.client.get("/oee?embedded=1")
+        api = self.client.get("/api/oee/summary?days=7")
+
+        self.assertEqual(page.status_code, 200)
+        self.assertIn("Eficiencia Global de Equipos", page.get_data(as_text=True))
+        self.assertEqual(api.status_code, 200)
+        self.assertEqual(result["runs"], 20)
+        self.assertEqual(db.session.scalar(db.select(db.func.count(Product.id))), 8)
+        self.assertEqual(db.session.scalar(db.select(db.func.count(WorkShift.id))), 3)
+        self.assertEqual(db.session.scalar(db.select(db.func.count(ProductionRun.id))), 20)
+        self.assertEqual(db.session.scalar(db.select(db.func.count(OEEResult.id))), 20)
+        self.assertGreater(api.json["summary"]["oee"], 0)
 
 
 if __name__ == "__main__":

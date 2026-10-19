@@ -85,6 +85,7 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-grad
     <div class="vmenu" id="processMenu"></div>
     <div class="vmenu" style="margin-top:9px">
       <button class="tool-btn" id="predictiveMenuButton" style="width:100%" onclick="showPredictiveView()">Analítica predictiva<span>Salud, riesgo de falla y diagnóstico de máquinas</span></button>
+      <button class="tool-btn" id="oeeMenuButton" style="width:100%;margin-top:7px" onclick="showOeeView()">Eficiencia OEE<span>Disponibilidad, rendimiento y calidad</span></button>
     </div>
     <div class="menu-title">Perfil</div><div class="vmenu" id="profileMenu"></div>
     <div class="menu-title">Simuladores SAP</div><div class="vmenu" id="sapMenu"></div>
@@ -105,6 +106,10 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-grad
     <section class="predictive-shell" id="predictiveEmbedded" hidden>
       <div class="predictive-toolbar"><div><span class="small">Proceso</span><h2>Analítica predictiva integrada</h2></div><button class="predictive-back" type="button" onclick="showStandardDashboard()">← Volver al dashboard</button></div>
       <iframe class="predictive-frame" id="predictiveFrame" title="Analítica predictiva integrada" loading="lazy"></iframe>
+    </section>
+    <section class="predictive-shell" id="oeeEmbedded" hidden>
+      <div class="predictive-toolbar"><div><span class="small">Producción</span><h2>OEE integrado</h2></div><button class="predictive-back" type="button" onclick="showStandardDashboard()">← Volver al dashboard</button></div>
+      <iframe class="predictive-frame" id="oeeFrame" title="Eficiencia OEE integrada" loading="lazy"></iframe>
     </section>
     <div class="standard-dashboard" id="standardDashboard">
     <section class="topbar">
@@ -195,7 +200,7 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-grad
   <header class="ai-head"><div><b>Copiloto SOP</b><small>Ollama + PostgreSQL/pgvector</small></div><button class="ai-close" id="aiClose" type="button" aria-label="Cerrar">×</button></header>
   <div class="ai-messages" id="aiMessages"><div class="ai-message assistant">Hola. Puedo consultar SOP, guiar troubleshooting o analizar el estado predictivo de las máquinas.</div></div>
   <form class="ai-compose" id="aiForm">{{ chat_form.csrf_token }}
-    <select id="aiMode" aria-label="Modo"><option value="auto">Automático</option><option value="sop">Consulta SOP</option><option value="troubleshooting">Troubleshooting guiado</option><option value="predictive">Analítica predictiva</option></select>
+    <select id="aiMode" aria-label="Modo"><option value="auto">Automático</option><option value="sop">Consulta SOP</option><option value="troubleshooting">Troubleshooting guiado</option><option value="predictive">Analítica predictiva</option><option value="oee">Eficiencia OEE</option></select>
     <textarea id="aiQuestion" maxlength="2000" required placeholder="Escribe una pregunta sobre tus procedimientos..."></textarea>
     <button class="ai-send" id="aiSend" type="submit">Consultar con IA</button>
   </form>
@@ -326,7 +331,8 @@ function renderMenus(){
 function btn(title,subtitle,click,active){const b=document.createElement('button'); if(active) b.classList.add('active'); b.innerHTML=`${title}<span>${subtitle}</span>`; b.onclick=click; return b;}
 function scrollToId(id){document.getElementById(id).scrollIntoView({behavior:'smooth'});}
 function showPredictiveView(){const standard=document.getElementById('standardDashboard'),embedded=document.getElementById('predictiveEmbedded'),frame=document.getElementById('predictiveFrame'),button=document.getElementById('predictiveMenuButton');standard.hidden=true;embedded.hidden=false;button.classList.add('active');if(!frame.dataset.loaded){frame.src={{ url_for('predictive_dashboard', embedded=1)|tojson }};frame.dataset.loaded='1';}document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});}
-function showStandardDashboard(){document.getElementById('standardDashboard').hidden=false;document.getElementById('predictiveEmbedded').hidden=true;document.getElementById('predictiveMenuButton').classList.remove('active');}
+function showOeeView(){showStandardDashboard();const standard=document.getElementById('standardDashboard'),embedded=document.getElementById('oeeEmbedded'),frame=document.getElementById('oeeFrame'),button=document.getElementById('oeeMenuButton');standard.hidden=true;embedded.hidden=false;button.classList.add('active');if(!frame.dataset.loaded){frame.src={{ url_for('oee_dashboard', embedded=1)|tojson }};frame.dataset.loaded='1';}document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});}
+function showStandardDashboard(){document.getElementById('standardDashboard').hidden=false;document.getElementById('predictiveEmbedded').hidden=true;document.getElementById('oeeEmbedded').hidden=true;document.getElementById('predictiveMenuButton').classList.remove('active');document.getElementById('oeeMenuButton').classList.remove('active');}
 function setProcess(id){showStandardDashboard();currentProcess=id; renderMenus(); renderProcess(); renderQuestions(); renderSimulator();}
 function setProfile(name){currentProfile=name; renderMenus(); renderQuestions();}
 function setSim(name){currentSim=name; renderMenus(); renderSimulator();}
@@ -382,5 +388,6 @@ function addChatMessage(text,type,sources=[]){const el=document.createElement('d
 aiMode.onchange=()=>{aiQuestion.placeholder=aiMode.value==='predictive'?'Ej.: ¿Cuál es el riesgo actual de la CT-900?':aiMode.value==='auto'?'Pregunta por SOP, alarmas o riesgo de máquinas...':'Escribe una pregunta sobre tus procedimientos...';};
 aiForm.onsubmit=async event=>{event.preventDefault();const question=aiQuestion.value.trim();if(question.length<5)return;addChatMessage(question,'user');aiQuestion.value='';aiSend.disabled=true;aiSend.textContent='Consultando...';try{const response=await fetch('/api/sop/chat',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':aiForm.querySelector('[name=csrf_token]').value},body:JSON.stringify({question,mode:aiMode.value})});const data=await response.json();if(!response.ok)throw new Error(data.error||'No fue posible consultar la IA.');addChatMessage(data.answer,'assistant',data.sources||[]);}catch(error){addChatMessage(error.message,'error');}finally{aiSend.disabled=false;aiSend.textContent='Consultar con IA';}};
 </script>
+<script src="{{ url_for('static', filename='session-timeout.js') }}" data-timeout="{{ config.SESSION_IDLE_TIMEOUT_SECONDS }}" data-login="{{ url_for('login') }}" data-heartbeat="{{ url_for('session_activity') }}"></script>
 </body>
 </html>

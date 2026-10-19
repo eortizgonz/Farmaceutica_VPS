@@ -117,5 +117,6 @@ refreshButton.addEventListener('click',refreshSnapshot);
 refreshSnapshot();
 setInterval(refreshSnapshot,15000);
 </script>
+<script src="{{ url_for('static', filename='session-timeout.js') }}" data-timeout="{{ config.SESSION_IDLE_TIMEOUT_SECONDS }}" data-login="{{ url_for('login') }}" data-heartbeat="{{ url_for('session_activity') }}"></script>
 </body>
 </html>

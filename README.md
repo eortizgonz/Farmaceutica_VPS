@@ -284,3 +284,40 @@ docker compose exec app python -m flask --app app ingest-machine-manuals
 El comando reemplaza de forma segura la versión anterior de cada manual. El
 botón **Ver factores** muestra los aportes al índice y la información del
 manual almacenado en pgvector.
+
+### Cierre de sesión por inactividad
+
+Las sesiones autenticadas vencen después de 30 minutos sin actividad real del
+usuario. Las actualizaciones automáticas del dashboard no prolongan la sesión.
+Sesenta segundos antes se muestra un aviso con cuenta regresiva y la opción
+**Continuar conectado**. Mover el ratón, usar el teclado, hacer clic, tocar o
+desplazarse también reinicia el contador.
+El intervalo se configura en segundos:
+
+```env
+SESSION_IDLE_TIMEOUT_SECONDS=1800
+```
+
+## Eficiencia Global de Equipos (OEE)
+
+El módulo OEE relaciona productos, tres turnos, órdenes, lotes, rutas por
+máquina, ejecuciones, contadores y eventos de parada. Calcula disponibilidad,
+rendimiento, calidad y OEE por ejecución, y presenta agregados por máquina para
+1, 7, 30 o 90 días.
+
+Después de aplicar las migraciones, genera una muestra coherente de 30 días:
+
+```bash
+flask --app app db upgrade
+flask --app app seed-oee-data --days 30
+```
+
+En Docker:
+
+```bash
+docker compose exec app python -m flask --app app seed-oee-data --days 30
+```
+
+La carga inicial es idempotente: si existen resultados OEE, conserva el
+historial. Los datos son simulados y deben reemplazarse posteriormente por
+contadores y eventos reales provenientes de PLC, MES o SAP.

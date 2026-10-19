@@ -5,7 +5,7 @@ import click
 import psycopg
 from psycopg import sql
 from dotenv import load_dotenv
-from flask import Flask, flash, jsonify, redirect, render_template, request, url_for
+from flask import Flask, flash, jsonify, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 
 from sqlalchemy.engine import URL, make_url
@@ -32,6 +32,8 @@ from predictive_service import (
     seed_demo_machines,
 )
 from predictive_chat import answer_predictive_question
+from oee_service import oee_dashboard_data, seed_oee_demo
+from oee_chat import answer_oee_question
 
 
 load_dotenv()
@@ -41,6 +43,9 @@ def resolve_chat_mode(question, requested_mode):
     if requested_mode != "auto":
         return requested_mode
     normalized = question.casefold()
+    oee_terms = ("oee", "eficiencia global", "disponibilidad", "rendimiento", "turno actual", "orden de producción", "orden de produccion", "lote activo", "microparada")
+    if any(term in normalized for term in oee_terms):
+        return "oee"
     predictive_terms = (
         "riesgo", "predictiv", "healthy", "warning", "critical", "crítica",
         "critica", "máquina debo revisar", "maquina debo revisar", "mayor riesgo",
@@ -89,6 +94,7 @@ def create_app(test_config=None):
         OLLAMA_EMBED_MODEL=os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text"),
         OLLAMA_TIMEOUT=int(os.getenv("OLLAMA_TIMEOUT", "300")),
         OLLAMA_MAX_TOKENS=int(os.getenv("OLLAMA_MAX_TOKENS", "220")),
+        SESSION_IDLE_TIMEOUT_SECONDS=int(os.getenv("SESSION_IDLE_TIMEOUT_SECONDS", "1800")),
         MAX_CONTENT_LENGTH=25 * 1024 * 1024,
     )
     if test_config:
@@ -105,6 +111,31 @@ def create_app(test_config=None):
     @login_manager.user_loader
     def load_user(user_id):
         return db.session.get(User, int(user_id))
+
+    @app.before_request
+    def enforce_idle_session_timeout():
+        if not current_user.is_authenticated:
+            return None
+        now = int(time.time())
+        last_activity = session.get("last_user_activity")
+        timeout = app.config["SESSION_IDLE_TIMEOUT_SECONDS"]
+        if last_activity is not None and now - int(last_activity) >= timeout:
+            logout_user()
+            session.clear()
+            if request.path.startswith("/api/"):
+                return jsonify(error="La sesión terminó por inactividad."), 401
+            flash("La sesión terminó por inactividad.", "info")
+            return redirect(url_for("login"))
+        if last_activity is None or request.endpoint == "session_activity":
+            session["last_user_activity"] = now
+        return None
+
+    @app.post("/api/session/activity")
+    @login_required
+    @csrf.exempt
+    def session_activity():
+        session["last_user_activity"] = int(time.time())
+        return jsonify(status="active")
 
     @app.route("/")
     @login_required
@@ -195,6 +226,18 @@ def create_app(test_config=None):
             manual=manual,
         )
 
+    @app.get("/oee")
+    @login_required
+    def oee_dashboard():
+        data = oee_dashboard_data(days=request.args.get("days", 7, type=int))
+        return render_template("oee.html", data=data, embedded=request.args.get("embedded") == "1")
+
+    @app.get("/api/oee/summary")
+    @login_required
+    def oee_summary_api():
+        days = max(1, min(request.args.get("days", 7, type=int), 90))
+        return jsonify(oee_dashboard_data(days=days))
+
     @app.get("/health")
     def health():
         return jsonify(status="ok")
@@ -219,6 +262,8 @@ def create_app(test_config=None):
                 mode = resolve_chat_mode(question_form.question.data, question_form.mode.data)
                 if mode == "predictive":
                     answer, sources = answer_predictive_question(question_form.question.data)
+                elif mode == "oee":
+                    answer, sources = answer_oee_question(question_form.question.data)
                 else:
                     answer, sources = answer_question(question_form.question.data, mode)
             except Exception as error:
@@ -234,12 +279,14 @@ def create_app(test_config=None):
         mode = payload.get("mode", "auto")
         if len(question) < 5 or len(question) > 2000:
             return jsonify(error="La pregunta debe tener entre 5 y 2000 caracteres."), 400
-        if mode not in {"auto", "sop", "troubleshooting", "predictive"}:
+        if mode not in {"auto", "sop", "troubleshooting", "predictive", "oee"}:
             return jsonify(error="Modo de consulta inválido."), 400
         try:
             mode = resolve_chat_mode(question, mode)
             if mode == "predictive":
                 answer, sources = answer_predictive_question(question)
+            elif mode == "oee":
+                answer, sources = answer_oee_question(question)
             else:
                 answer, sources = answer_question(question, mode)
             return jsonify(answer=answer, sources=sources)
@@ -286,6 +333,7 @@ def create_app(test_config=None):
             )
             if user and user.check_password(form.password.data):
                 login_user(user, remember=form.remember.data)
+                session["last_user_activity"] = int(time.time())
                 return redirect(url_for("index"))
             flash("Usuario/correo o contraseña incorrectos.", "error")
         return render_template("auth/login.html", form=form)
@@ -408,6 +456,14 @@ def create_app(test_config=None):
         except ValueError as error:
             raise click.ClickException(str(error)) from error
         click.echo(f"Nueva captura completada: {count} lecturas.")
+
+    @app.cli.command("seed-oee-data")
+    @click.option("--days", type=click.IntRange(min=1, max=365), default=30, show_default=True)
+    @click.option("--seed", type=int, default=2026, show_default=True)
+    def seed_oee_data_command(days, seed):
+        """Crea productos, turnos, órdenes, lotes y resultados OEE simulados."""
+        result = seed_oee_demo(days=days, seed=seed)
+        click.echo(f"OEE cargado: {result['products']} productos, {result['shifts']} turnos, {result['orders']} órdenes y {result['runs']} ejecuciones nuevas.")
 
     @app.cli.command("run-reading-collector")
     @click.option("--interval-seconds", type=click.IntRange(min=5, max=86400), default=15, show_default=True)
