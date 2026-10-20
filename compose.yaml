@@ -80,6 +80,34 @@ services:
     networks:
       - backend
 
+  oee-collector:
+    image: ${APP_IMAGE:-farmaceutica-copilot:local}
+    restart: unless-stopped
+    entrypoint: []
+    healthcheck:
+      disable: true
+    command:
+      - python
+      - -m
+      - flask
+      - --app
+      - app
+      - run-oee-collector
+      - --interval-seconds
+      - "${OEE_CAPTURE_INTERVAL:-900}"
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-pharma_copilot}
+      POSTGRES_USER: ${POSTGRES_USER:-pharma_app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD in .env}
+      SECRET_KEY: ${SECRET_KEY:?Configure SECRET_KEY in .env}
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - backend
+
 volumes:
   postgres_data:
 

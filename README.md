@@ -4,10 +4,8 @@ Aplicación demo avanzada para procesos de Farmacéutica y Dispositivos Médicos
 
 ## Qué incluye
 - Dashboard 360 ejecutivo
-- Mini apps integradas por proceso: Validación, Batch Records, Auditoría, Calidad y Regulación
+- Módulos integrados de Analítica predictiva y Eficiencia OEE
 - Semáforo dinámico por KPI
-- Simuladores SAP: ERP, MII, ME, CAP y BTP
-- Preguntas dinámicas por perfil: Operacional, Financiero, Ejecutivo y Comercial
 - Centro de alertas, acciones sugeridas, cronograma y cockpit documental
 - Diseño tipo cloud, profesional y centrado en UX
 
@@ -321,3 +319,18 @@ docker compose exec app python -m flask --app app seed-oee-data --days 30
 La carga inicial es idempotente: si existen resultados OEE, conserva el
 historial. Los datos son simulados y deben reemplazarse posteriormente por
 contadores y eventos reales provenientes de PLC, MES o SAP.
+
+El servicio Docker `oee-collector` agrega automáticamente una ventana por cada
+máquina y recalcula el OEE. Su frecuencia es independiente del recolector
+predictivo:
+
+```env
+OEE_CAPTURE_INTERVAL=900
+```
+
+El valor está expresado en segundos; `900` equivale a 15 minutos. La pantalla
+OEE consulta nuevos resultados cada 30 segundos. Para ejecución local continua:
+
+```bash
+flask --app app run-oee-collector --interval-seconds 900
+```

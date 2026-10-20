@@ -1,8 +1,9 @@
 import random
 from datetime import datetime, time as clock_time, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from extensions import db
-from models import (Machine, MachineDowntimeEvent, OEEResult, Product,
+from models import (Machine, MachineDowntimeEvent, MachineReading, OEEResult, Product,
                     ProductionBatch, ProductionCounter, ProductionOrder,
                     ProductionRun, ProductRouting, WorkShift)
 from predictive_service import CONDITION_PROFILES, seed_demo_machines
@@ -105,6 +106,63 @@ def seed_oee_demo(days=30, seed=2026):
             inserted += 1
     db.session.commit()
     return {"products": len(products), "shifts": len(shifts), "orders": len(orders), "runs": inserted}
+
+
+def append_oee_snapshot(recorded_at=None, interval_minutes=15, seed=None):
+    """Agrega una ventana OEE por máquina para simular el avance productivo."""
+    if interval_minutes < 1:
+        raise ValueError("El intervalo OEE debe ser de al menos un minuto.")
+    if not db.session.scalar(db.select(db.func.count(OEEResult.id))):
+        raise ValueError("Primero debe ejecutar seed-oee-data.")
+    rng = random.Random(seed)
+    recorded_at = recorded_at or datetime.now(timezone.utc)
+    window_seconds = interval_minutes * 60
+    recorded_at = datetime.fromtimestamp(
+        int(recorded_at.timestamp()) // window_seconds * window_seconds, tz=timezone.utc
+    )
+    local_time = recorded_at.astimezone(ZoneInfo("America/Bogota")).time().replace(tzinfo=None)
+    shifts = db.session.scalars(db.select(WorkShift).where(WorkShift.active.is_(True))).all()
+    shift = next((item for item in shifts if (item.start_time <= local_time < item.end_time if item.start_time < item.end_time else local_time >= item.start_time or local_time < item.end_time)), None)
+    if not shift:
+        raise ValueError("No existe un turno configurado para la hora actual.")
+
+    inserted = 0
+    machines = db.session.scalars(db.select(Machine).order_by(Machine.id)).all()
+    for index, machine in enumerate(machines):
+        exists = db.session.scalar(db.select(ProductionRun.id).where(ProductionRun.machine_id == machine.id, ProductionRun.started_at == recorded_at).limit(1))
+        if exists:
+            continue
+        routing = db.session.scalar(db.select(ProductRouting).where(ProductRouting.machine_id == machine.id).order_by(ProductRouting.id).limit(1))
+        if not routing:
+            continue
+        order = db.session.scalar(db.select(ProductionOrder).where(ProductionOrder.product_id == routing.product_id, ProductionOrder.status == "In Progress").order_by(ProductionOrder.id).limit(1))
+        if not order:
+            continue
+        batch = db.session.scalar(db.select(ProductionBatch).where(ProductionBatch.production_order_id == order.id, ProductionBatch.status == "In Progress").order_by(ProductionBatch.id).limit(1))
+        if not batch:
+            continue
+        latest_reading = db.session.scalar(db.select(MachineReading).where(MachineReading.machine_id == machine.id).order_by(MachineReading.recorded_at.desc()).limit(1))
+        risk = latest_reading.failure_probability / 100 if latest_reading else CONDITION_PROFILES[index % len(CONDITION_PROFILES)]
+        has_stop = rng.random() < 0.12 + risk * 0.38
+        downtime = round(rng.uniform(0.5, max(0.6, interval_minutes * min(0.45, 0.08 + risk * 0.35))), 1) if has_stop else 0.0
+        operating = interval_minutes - downtime
+        performance_target = max(0.58, min(0.99, 0.97 - risk * 0.20 + rng.uniform(-0.035, 0.035)))
+        quality_target = max(0.88, min(0.999, 0.996 - risk * 0.055 + rng.uniform(-0.006, 0.004)))
+        total = max(1, int(operating * 60 / routing.ideal_cycle_time_seconds * performance_target))
+        good = max(0, int(total * quality_target))
+        ended_at = recorded_at + timedelta(minutes=interval_minutes)
+        run = ProductionRun(production_order_id=order.id, batch_id=batch.id, product_id=routing.product_id, machine_id=machine.id, shift_id=shift.id, operation_sequence=routing.sequence, started_at=recorded_at, ended_at=ended_at, planned_minutes=interval_minutes, ideal_cycle_time_seconds=routing.ideal_cycle_time_seconds, status="Completed")
+        db.session.add(run); db.session.flush()
+        db.session.add(ProductionCounter(production_run_id=run.id, recorded_at=ended_at, total_units=total, good_units=good, rejected_units=total-good, rework_units=int((total-good)*0.15)))
+        if downtime:
+            reason = rng.choice(REASONS)
+            stop_at = recorded_at + timedelta(minutes=rng.uniform(0, max(0, interval_minutes-downtime)))
+            db.session.add(MachineDowntimeEvent(production_run_id=run.id, machine_id=machine.id, started_at=stop_at, ended_at=stop_at + timedelta(minutes=downtime), duration_minutes=downtime, reason_code=reason[0], reason_description=reason[1], category=reason[2], is_planned=reason[0] == "SET"))
+        availability, performance, quality, oee, operating_minutes = calculate_oee(interval_minutes, downtime, routing.ideal_cycle_time_seconds, total, good)
+        db.session.add(OEEResult(production_run_id=run.id, calculated_at=ended_at, availability=availability, performance=performance, quality=quality, oee=oee, operating_minutes=operating_minutes, downtime_minutes=downtime, total_units=total, good_units=good))
+        inserted += 1
+    db.session.commit()
+    return inserted
 
 
 def oee_dashboard_data(days=7):

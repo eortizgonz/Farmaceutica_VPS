@@ -32,7 +32,7 @@ from predictive_service import (
     seed_demo_machines,
 )
 from predictive_chat import answer_predictive_question
-from oee_service import oee_dashboard_data, seed_oee_demo
+from oee_service import append_oee_snapshot, oee_dashboard_data, seed_oee_demo
 from oee_chat import answer_oee_question
 
 
@@ -464,6 +464,25 @@ def create_app(test_config=None):
         """Crea productos, turnos, órdenes, lotes y resultados OEE simulados."""
         result = seed_oee_demo(days=days, seed=seed)
         click.echo(f"OEE cargado: {result['products']} productos, {result['shifts']} turnos, {result['orders']} órdenes y {result['runs']} ejecuciones nuevas.")
+
+    @app.cli.command("run-oee-collector")
+    @click.option("--interval-seconds", type=click.IntRange(min=60, max=86400), default=900, show_default=True)
+    @click.option("--iterations", type=click.IntRange(min=0), default=0, hidden=True)
+    def run_oee_collector_command(interval_seconds, iterations):
+        """Simula continuamente producción, pérdidas y resultados OEE."""
+        seed_oee_demo(days=30)
+        interval_minutes = max(1, round(interval_seconds / 60))
+        click.echo(f"Recolector OEE activo: una ventana cada {interval_seconds} segundos.")
+        completed = 0
+        try:
+            while not iterations or completed < iterations:
+                count = append_oee_snapshot(interval_minutes=interval_minutes)
+                completed += 1
+                click.echo(f"Ventana OEE {completed}: {count} ejecuciones insertadas.")
+                if not iterations or completed < iterations:
+                    time.sleep(interval_seconds)
+        except KeyboardInterrupt:
+            click.echo("Recolector OEE detenido.")
 
     @app.cli.command("run-reading-collector")
     @click.option("--interval-seconds", type=click.IntRange(min=5, max=86400), default=15, show_default=True)

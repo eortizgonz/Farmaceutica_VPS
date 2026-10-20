@@ -6,7 +6,7 @@ from unittest.mock import patch
 from app import create_app, resolve_chat_mode
 from extensions import db
 from models import Machine, MachineReading, OEEResult, Product, ProductionRun, User, WorkShift
-from oee_service import seed_oee_demo
+from oee_service import append_oee_snapshot, seed_oee_demo
 from predictive_service import append_simulated_snapshot, seed_demo_machines
 
 
@@ -274,6 +274,11 @@ class AuthFlowTestCase(unittest.TestCase):
         self.assertEqual(db.session.scalar(db.select(db.func.count(ProductionRun.id))), 20)
         self.assertEqual(db.session.scalar(db.select(db.func.count(OEEResult.id))), 20)
         self.assertGreater(api.json["summary"]["oee"], 0)
+
+        captured_at = datetime.now(timezone.utc).replace(second=0, microsecond=0) + timedelta(minutes=15)
+        self.assertEqual(append_oee_snapshot(recorded_at=captured_at, interval_minutes=15, seed=7), 20)
+        self.assertEqual(append_oee_snapshot(recorded_at=captured_at, interval_minutes=15, seed=7), 0)
+        self.assertEqual(db.session.scalar(db.select(db.func.count(OEEResult.id))), 40)
 
 
 if __name__ == "__main__":

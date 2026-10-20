@@ -87,14 +87,9 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-grad
       <button class="tool-btn" id="predictiveMenuButton" style="width:100%" onclick="showPredictiveView()">Analítica predictiva<span>Salud, riesgo de falla y diagnóstico de máquinas</span></button>
       <button class="tool-btn" id="oeeMenuButton" style="width:100%;margin-top:7px" onclick="showOeeView()">Eficiencia OEE<span>Disponibilidad, rendimiento y calidad</span></button>
     </div>
-    <div class="menu-title">Perfil</div><div class="vmenu" id="profileMenu"></div>
-    <div class="menu-title">Simuladores SAP</div><div class="vmenu" id="sapMenu"></div>
     <div class="menu-title">Accesos rápidos</div>
     <div class="vmenu">
       <a href="{{ url_for('sop_assistant') }}" style="text-decoration:none"><button class="tool-btn" style="width:100%">Asistente SOP + IA</button></a>
-      <button class="tool-btn" onclick="scrollToId('qa')">Preguntas y respuestas</button>
-      <button class="tool-btn" onclick="scrollToId('simulators')">Simuladores integrados</button>
-      <button class="tool-btn" onclick="scrollToId('reports')">Reportes y exportables</button>
     </div>
     <div class="user-card">
       <b>{{ current_user.name }}</b><span>@{{ current_user.username }}</span>
@@ -162,36 +157,6 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-grad
       </div>
     </section>
 
-    <section class="qa-grid" id="qa">
-      <div class="card">
-        <div class="panel-title"><h3 class="title-sm">Preguntas dinámicas por perfil</h3><span class="small" id="profileBadge">Perfil activo: Operacional</span></div>
-        <div class="question-list" id="questionList"></div>
-      </div>
-      <div class="answer" id="answerBox">
-        <div class="panel-title"><h3 id="answerTitle">Seleccione una pregunta</h3><div class="traffic" id="answerTraffic"><i></i><i></i><i></i></div></div>
-        <p id="answerText">La plataforma responderá automáticamente con impacto, análisis y acciones sugeridas.</p>
-        <div class="track"><div class="fill" id="answerFill" style="width:60%"></div></div>
-        <div class="bullet-grid" id="answerBullets"></div>
-        <div class="action-list" id="actionList"></div>
-      </div>
-    </section>
-
-    <section class="card" id="simulators" style="margin-top:16px">
-      <div class="panel-title"><h3 class="title-sm">Simuladores SAP integrados</h3><span class="small">ERP · MII · ME · CAP · BTP</span></div>
-      <div class="sim-grid" id="simGrid"></div>
-      <div class="simPanel" id="simPanel"><h3 style="margin:0 0 8px">Seleccione un simulador</h3><p style="margin:0;color:var(--muted)">Cada simulador explica qué información entrega a la app y cómo apoya la toma de decisiones del proceso actual.</p></div>
-    </section>
-
-    <section class="card" id="reports" style="margin-top:16px">
-      <div class="panel-title"><h3 class="title-sm">Reportes y entregables</h3><span class="small">Información disponible dentro de la app</span></div>
-      <div class="report-grid" id="reportsGrid"></div>
-      <div class="footer-cta">
-        <button class="cta" onclick="setProfile('Operacional')">Vista Operacional</button>
-        <button class="cta" onclick="setProfile('Financiero')">Vista Financiera</button>
-        <button class="cta" onclick="setProfile('Ejecutivo')">Vista Ejecutiva</button>
-        <button class="cta" onclick="setProfile('Comercial')">Vista Comercial</button>
-      </div>
-    </section>
     </div>
   </main>
 </div>
@@ -206,14 +171,6 @@ body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-grad
   </form>
 </section>
 <script>
-const profiles=['Operacional','Financiero','Ejecutivo','Comercial'];
-const simulators={
-  ERP:{title:'SAP ERP',tag:'Core transactional',desc:'Órdenes, materiales, costos, compras, lotes y status financiero.',bullets:['Recibe producción y stock','Expone costos estándar y reales','Sincroniza maestros y órdenes'],impact:['Planificación más confiable','Visibilidad de costo y margen','Estado financiero del lote']},
-  MII:{title:'SAP MII',tag:'Manufacturing intelligence',desc:'Historian, monitoreo de planta, dashboards técnicos y visibilidad de eventos.',bullets:['Captura señales de equipos','Monitorea paradas y eventos','Contextualiza variables de proceso'],impact:['Detección temprana de desvíos','Trazabilidad técnica','Análisis de causa raíz']},
-  ME:{title:'SAP ME',tag:'Manufacturing execution',desc:'Ejecución en piso, trazabilidad de operación, genealogía y e-records.',bullets:['Gestiona rutas y operaciones','Controla consumos y serialización','Evidencia electrónica del lote'],impact:['Mayor cumplimiento batch','Reducción de errores manuales','Trazabilidad end-to-end']},
-  CAP:{title:'SAP CAP',tag:'Custom apps',desc:'Servicios y apps propias para reglas de negocio, workflows y analítica extendida.',bullets:['Microservicios por proceso','Reglas automáticas de negocio','APIs y pantallas personalizadas'],impact:['Flexibilidad funcional','Automatización de aprobaciones','UX adaptada al rubro']},
-  BTP:{title:'SAP BTP',tag:'Integration & analytics',desc:'Integración cloud, workflows, data products, IA y aplicaciones extendidas.',bullets:['Orquesta integraciones','Despliega apps cloud','Entrega analítica y automatización'],impact:['Arquitectura moderna','Escalabilidad empresarial','Mayor velocidad de innovación']}
-};
 const processData={
   validation:{
     name:'Validación', signal:'green', status:'Proceso estable y controlado',
@@ -320,23 +277,31 @@ const processData={
     }
   }
 };
+// El módulo de Validación fue retirado de la navegación y del contenido activo.
+delete processData.validation;
+// El módulo de Batch Records también fue retirado del contenido activo.
+delete processData.batch;
+// El módulo de Auditoría también fue retirado del contenido activo.
+delete processData.audit;
+// El módulo de Calidad también fue retirado del contenido activo.
+delete processData.quality;
+// El módulo de Regulación también fue retirado del contenido activo.
+delete processData.regulatory;
 function q(question,answer,impact,score,bullets,actions){return{question,answer,impact,score,bullets,actions};}
-let currentProcess='validation'; let currentProfile='Operacional'; let currentSim='ERP';
+let currentProcess=null;
 function renderMenus(){
   const pm=document.getElementById('processMenu');
   pm.innerHTML=''; Object.keys(processData).forEach(id=>{const p=processData[id]; const b=btn(p.name,p.title,()=>setProcess(id), id===currentProcess); pm.appendChild(b);});
-  const pf=document.getElementById('profileMenu'); pf.innerHTML=''; profiles.forEach(name=>pf.appendChild(btn(name,'Preguntas y respuesta por perfil',()=>setProfile(name), name===currentProfile)));
-  const sm=document.getElementById('sapMenu'); sm.innerHTML=''; Object.keys(simulators).forEach(key=>sm.appendChild(btn(key,simulators[key].tag,()=>setSim(key), key===currentSim)));
 }
 function btn(title,subtitle,click,active){const b=document.createElement('button'); if(active) b.classList.add('active'); b.innerHTML=`${title}<span>${subtitle}</span>`; b.onclick=click; return b;}
 function scrollToId(id){document.getElementById(id).scrollIntoView({behavior:'smooth'});}
-function showPredictiveView(){const standard=document.getElementById('standardDashboard'),embedded=document.getElementById('predictiveEmbedded'),frame=document.getElementById('predictiveFrame'),button=document.getElementById('predictiveMenuButton');standard.hidden=true;embedded.hidden=false;button.classList.add('active');if(!frame.dataset.loaded){frame.src={{ url_for('predictive_dashboard', embedded=1)|tojson }};frame.dataset.loaded='1';}document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});}
-function showOeeView(){showStandardDashboard();const standard=document.getElementById('standardDashboard'),embedded=document.getElementById('oeeEmbedded'),frame=document.getElementById('oeeFrame'),button=document.getElementById('oeeMenuButton');standard.hidden=true;embedded.hidden=false;button.classList.add('active');if(!frame.dataset.loaded){frame.src={{ url_for('oee_dashboard', embedded=1)|tojson }};frame.dataset.loaded='1';}document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});}
-function showStandardDashboard(){document.getElementById('standardDashboard').hidden=false;document.getElementById('predictiveEmbedded').hidden=true;document.getElementById('oeeEmbedded').hidden=true;document.getElementById('predictiveMenuButton').classList.remove('active');document.getElementById('oeeMenuButton').classList.remove('active');}
-function setProcess(id){showStandardDashboard();currentProcess=id; renderMenus(); renderProcess(); renderQuestions(); renderSimulator();}
-function setProfile(name){currentProfile=name; renderMenus(); renderQuestions();}
-function setSim(name){currentSim=name; renderMenus(); renderSimulator();}
+function hideDashboardViews(){document.getElementById('standardDashboard').hidden=true;document.getElementById('predictiveEmbedded').hidden=true;document.getElementById('oeeEmbedded').hidden=true;document.getElementById('predictiveMenuButton').classList.remove('active');document.getElementById('oeeMenuButton').classList.remove('active');}
+function showPredictiveView(){hideDashboardViews();const embedded=document.getElementById('predictiveEmbedded'),frame=document.getElementById('predictiveFrame'),button=document.getElementById('predictiveMenuButton');embedded.hidden=false;button.classList.add('active');if(!frame.dataset.loaded){frame.src={{ url_for('predictive_dashboard', embedded=1)|tojson }};frame.dataset.loaded='1';}document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});}
+function showOeeView(){hideDashboardViews();const embedded=document.getElementById('oeeEmbedded'),frame=document.getElementById('oeeFrame'),button=document.getElementById('oeeMenuButton');embedded.hidden=false;button.classList.add('active');if(!frame.dataset.loaded){frame.src={{ url_for('oee_dashboard', embedded=1)|tojson }};frame.dataset.loaded='1';}document.querySelector('.main').scrollTo({top:0,behavior:'smooth'});}
+function showStandardDashboard(){showPredictiveView();}
+function setProcess(id){showStandardDashboard();currentProcess=id; renderMenus(); renderProcess();}
 function renderProcess(){
+  if(!currentProcess)return;
   const p=processData[currentProcess];
   document.getElementById('heroTitle').textContent=p.title;
   document.getElementById('heroText').textContent=p.description;
@@ -352,35 +317,15 @@ function renderProcess(){
   const flow=document.getElementById('flow'); flow.innerHTML=''; p.flow.forEach(f=>flow.innerHTML+=`<div class="module"><h4>${f[0]}</h4><p>${f[1]}</p></div>`);
   const alerts=document.getElementById('alerts'); alerts.innerHTML=''; p.alerts.forEach(a=>alerts.innerHTML+=`<div class="alert"><div class="top"><span class="signal"><span class="dot ${a[0]}"></span>${a[0]==='green'?'Verde':a[0]==='yellow'?'Amarillo':'Rojo'}</span><span class="compact">Prioridad</span></div><b>${a[1]}</b><div class="small">${a[2]}</div></div>`);
   const tl=document.getElementById('timeline'); tl.innerHTML=''; p.timeline.forEach(t=>tl.innerHTML+=`<div class="timeline-item"><b>${t[0]}</b><div class="small">${t[1]}</div></div>`);
-  const rg=document.getElementById('reportsGrid'); rg.innerHTML=''; p.reports.forEach(r=>rg.innerHTML+=`<div class="report"><b>${r[0]}</b><div class="small">${r[1]}</div></div>`);
-}
-function renderQuestions(){
-  const p=processData[currentProcess]; const list=p.questions[currentProfile]||[]; document.getElementById('profileBadge').textContent='Perfil activo: '+currentProfile;
-  const ql=document.getElementById('questionList'); ql.innerHTML='';
-  list.forEach((item,idx)=>{const d=document.createElement('div'); d.className='question'+(idx===0?' active':''); d.innerHTML=`<h4>${item.question}</h4><p>${item.impact}</p>`; d.onclick=()=>{document.querySelectorAll('.question').forEach(x=>x.classList.remove('active')); d.classList.add('active'); showAnswer(item);}; ql.appendChild(d);});
-  if(list[0]) showAnswer(list[0]);
-}
-function showAnswer(item){
-  document.getElementById('answerTitle').textContent=item.question;
-  document.getElementById('answerText').textContent=item.answer+' Impacto: '+item.impact;
-  const fill=document.getElementById('answerFill'); fill.style.width=item.score+'%'; fill.className='fill '+(item.score>=85?'':item.score>=75?'yellow':'red');
-  document.getElementById('answerTraffic').innerHTML=lights(item.score>=85?'green':item.score>=75?'yellow':'red');
-  const bullets=document.getElementById('answerBullets'); bullets.innerHTML=''; item.bullets.forEach(b=>bullets.innerHTML+=`<div class="bullet">${b}</div>`);
-  const actions=document.getElementById('actionList'); actions.innerHTML=''; item.actions.forEach(a=>actions.innerHTML+=`<div class="action"><b>${a[0]}</b><div class="small">Responsable: ${a[1]} · <span class="pill ${a[2]==='Alta'?'p-high':a[2]==='Media'?'p-med':'p-low'}">${a[2]}</span></div></div>`);
-}
-function renderSimulator(){
-  const sg=document.getElementById('simGrid'); sg.innerHTML='';
-  Object.keys(simulators).forEach(key=>{const s=simulators[key]; const d=document.createElement('div'); d.className='simBtn'+(key===currentSim?' active':''); d.innerHTML=`<div class="tag">${s.tag}</div><h4>${s.title}</h4><p>${s.desc}</p>`; d.onclick=()=>setSim(key); sg.appendChild(d);});
-  const p=processData[currentProcess]; const s=simulators[currentSim];
-  document.getElementById('simPanel').innerHTML=`<h3 style="margin:0 0 8px">${s.title} aplicado a ${p.name}</h3><p style="margin:0;color:var(--muted)">${s.desc}</p><div class="bullet-grid">${s.bullets.map(b=>`<div class="bullet">${b}</div>`).join('')}${s.impact.map(b=>`<div class="bullet">${b}</div>`).join('')}</div><div class="action-list" style="margin-top:12px"><div class="action"><b>Respuesta simulada</b><div class="small">Para el proceso ${p.name}, ${currentSim} aporta visibilidad, contexto y automatización para reducir riesgo y acelerar decisiones.</div></div></div>`;
 }
 function lights(sig){return `<i class="${sig==='green'?'green on':'green'}"></i><i class="${sig==='yellow'?'yellow on':'yellow'}"></i><i class="${sig==='red'?'red on':'red'}"></i>`;}
 function signalClass(s){return s==='green'?'green':s==='yellow'?'yellow':'red';}
 function textSignalClass(t){return t==='Verde'?'green':t==='Amarillo'?'yellow':'red';}
 function animateKpis(){
+  if(!currentProcess)return;
   const p=processData[currentProcess]; p.kpis.forEach((k,i)=>{const el=document.getElementById('kpi-'+i); if(!el) return; const base=parseFloat(el.dataset.base); const unit=el.dataset.unit; const jitter=(Math.random()*2-1)*1.2; let next=Math.max(0,Math.min(100,base+jitter)); if(unit==='pts') next=next.toFixed(0); else if(unit==='%') next=next.toFixed(0); else next=next.toFixed(0); el.textContent=next+unit; });
 }
-renderMenus(); renderProcess(); renderQuestions(); renderSimulator(); setInterval(animateKpis,2200);
+renderMenus(); showPredictiveView();
 const aiChat=document.getElementById('aiChat'), aiMessages=document.getElementById('aiMessages'), aiForm=document.getElementById('aiForm'), aiQuestion=document.getElementById('aiQuestion'), aiSend=document.getElementById('aiSend'), aiMode=document.getElementById('aiMode');
 document.getElementById('aiLauncher').onclick=()=>{aiChat.classList.toggle('open'); if(aiChat.classList.contains('open')) aiQuestion.focus();};
 document.getElementById('aiClose').onclick=()=>aiChat.classList.remove('open');
